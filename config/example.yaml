@@ -1,0 +1,14 @@
+addr: ':8080'
+webhook_secret: 'your-super-secret-webhook-string'
+telegram:
+  bots:
+    - token: 'telegram-bot-token-1'
+      clients:
+        - name: 'User One'
+          chat_id: '123456789'
+        - name: 'User Two'
+          chat_id: '987654321'
+    - token: 'telegram-bot-token-2'
+      clients:
+        - name: 'Admin'
+          chat_id: '1122334455'

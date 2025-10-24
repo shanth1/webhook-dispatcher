@@ -1,0 +1,9 @@
+📦 New push to {{ .repository.full_name }} by {{ .sender.login }}
+
+Branch: {{ .ref }}
+Commits:
+{{- range .commits }}
+- {{ .message }} (by {{ .author.name }})
+{{- end }}
+
+Compare changes: {{ .compare }}
