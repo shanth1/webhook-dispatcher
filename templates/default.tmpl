@@ -1,5 +1,4 @@
-🔔 GitHub Event Received
+🔔 GitHub Event: {{ .eventName }}
 
-Repository: {{ .repository.full_name }}
-Event Type: {{ .eventName }}
-Sender: {{ .sender.login }}
+Repository: [{{ .repository.full_name }}]({{ .repository.html_url }})
+Sender: [{{ .sender.login }}]({{ .sender.html_url }})

@@ -1,9 +1,9 @@
-📦 New push to {{ .repository.full_name }} by {{ .sender.login }}
+📦 {{ len .commits }} new commit(s) pushed to [{{ .repository.name }}]({{ .repository.html_url }})
 
-Branch: {{ .ref }}
+Branch: `{{ .ref }}` by [{{ .sender.login }}]({{ .sender.html_url }})
 Commits:
 {{- range .commits }}
-- {{ .message }} (by {{ .author.name }})
+- `{{ .id  }}`: {{ .message }} (by {{ .author.name }}) [View]({{ .url }})
 {{- end }}
 
-Compare changes: {{ .compare }}
+Compare changes: [{{ .compare }}]({{ .compare }})
