@@ -35,8 +35,12 @@ func (h *handler) webhookHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	signature := r.Header.Get("X-Hub-Signature-256")
+	if signature == "" {
+		logger.Error().Msg("signature is empty")
+		http.Error(w, "Signature is empty", http.StatusBadRequest)
+	}
 	if !verifySignature(body, h.cfg.WebhookSecret, signature) {
-		logger.Error().Err(err).Msg("invalid webhook signature")
+		logger.Error().Msg("invalid webhook signature")
 		http.Error(w, "Invalid signature", http.StatusForbidden)
 		return
 	}
@@ -81,10 +85,6 @@ func (h *handler) webhookHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func verifySignature(body []byte, secret string, signature string) bool {
-	if signature == "" {
-		return false
-	}
-
 	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write(body)
 	expectedMAC := "sha256=" + hex.EncodeToString(mac.Sum(nil))
