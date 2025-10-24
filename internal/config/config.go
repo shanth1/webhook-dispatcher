@@ -1,21 +1,21 @@
 package config
 
 type Client struct {
-	Name   string `yaml:"name"`
-	ChatID string `yaml:"chat_id"`
+	Name   string `mapstructure:"name"`
+	ChatID string `mapstructure:"chat_id"`
 }
 
 type Bot struct {
-	Token   string   `yaml:"token"`
-	Clients []Client `yaml:"clients"`
+	Token   string   `mapstructure:"token"`
+	Clients []Client `mapstructure:"clients"`
 }
 
 type Telegram struct {
-	Bots []Bot `yaml:"bots"`
+	Bots []Bot `mapstructure:"bots"`
 }
 
 type Config struct {
-	Addr          string    `yaml:"addr"`
-	WebhookSecret string    `yaml:"webhook_secret"`
-	Telegram      *Telegram `yaml:"telegram"`
+	Addr          string    `mapstructure:"addr"`
+	WebhookSecret string    `mapstructure:"webhook_secret"`
+	Telegram      *Telegram `mapstructure:"telegram"`
 }
