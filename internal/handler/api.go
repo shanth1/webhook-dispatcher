@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/shanth1/gotools/log"
 )
@@ -44,9 +45,23 @@ func (h *handler) webhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	form, err := url.ParseQuery(string(body))
+	if err != nil {
+		logger.Error().Err(err).Msg("parsing form payload")
+		http.Error(w, "Error parsing form payload", http.StatusBadRequest)
+		return
+	}
+
+	payloadJSON := form.Get("payload")
+	if payloadJSON == "" {
+		logger.Error().Msg("payload field is empty")
+		http.Error(w, "Payload field is empty", http.StatusBadRequest)
+		return
+	}
+
 	eventName := r.Header.Get("X-GitHub-Event")
 	var payload map[string]interface{}
-	if err := json.Unmarshal(body, &payload); err != nil {
+	if err := json.Unmarshal([]byte(payloadJSON), &payload); err != nil {
 		logger.Error().Err(err).Msg("parsing json payload")
 		http.Error(w, "Error parsing JSON payload", http.StatusBadRequest)
 		return

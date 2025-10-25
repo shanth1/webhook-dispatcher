@@ -51,15 +51,16 @@ help:
 
 # --- Build ---
 
-# Build the main application
-.PHONY: build
-build: build-complete build-basic
-
 # Build the complete application version
 .PHONY: build-complete
 build-complete: $(GOFILES)
 	@echo "Building $(BINARY_NAME_COMPLETE)..."
 	@go build -o build/$(BINARY_NAME_COMPLETE) $(CMD_PATH_COMPLETE)
+	@echo "Build of build/$(BINARY_NAME_COMPLETE) complete."
+
+build-complete-linux: $(GOFILES)
+	@echo "Building $(BINARY_NAME_COMPLETE) for Linux..."
+	@GOOS=linux GOARCH=amd64 go build -o build/$(BINARY_NAME_COMPLETE) $(CMD_PATH_COMPLETE)
 	@echo "Build of build/$(BINARY_NAME_COMPLETE) complete."
 
 # Build the basic application version
