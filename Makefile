@@ -59,8 +59,9 @@ build-complete: $(GOFILES)
 	@echo "Build of build/$(BINARY_NAME_COMPLETE) complete."
 
 build-complete-linux: $(GOFILES)
-	@echo "Building for Linux (amd64)..."
+	@echo "Building $(BINARY_NAME_COMPLETE) for Linux..."
 	@GOOS=linux GOARCH=amd64 go build -o build/$(BINARY_NAME_COMPLETE) $(CMD_PATH_COMPLETE)
+	@echo "Build of build/$(BINARY_NAME_COMPLETE) complete."
 
 # Build the basic application version
 .PHONY: build-basic
