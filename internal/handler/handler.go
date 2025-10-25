@@ -14,14 +14,14 @@ type handler struct {
 	cfg       *config.Config
 	logger    log.Logger
 	templates *template.Template
-	sender    *service.TelegramSender
+	notifier  *service.Notifier
 }
 
-func New(cfg *config.Config, templates *template.Template, sender *service.TelegramSender, logger log.Logger) *handler {
+func New(cfg *config.Config, templates *template.Template, notifier *service.Notifier, logger log.Logger) *handler {
 	return &handler{
 		cfg:       cfg,
 		logger:    logger,
-		sender:    sender,
+		notifier:  notifier,
 		templates: templates,
 	}
 }

@@ -8,10 +8,8 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"sync"
 
 	"github.com/shanth1/gotools/log"
-	"github.com/shanth1/telehook/internal/config"
 )
 
 func (h *handler) webhookHandler(w http.ResponseWriter, r *http.Request) {
@@ -36,8 +34,9 @@ func (h *handler) webhookHandler(w http.ResponseWriter, r *http.Request) {
 
 	signature := r.Header.Get("X-Hub-Signature-256")
 	if signature == "" {
-		logger.Error().Msg("signature is empty")
+		logger.Warn().Msg("signature is empty")
 		http.Error(w, "Signature is empty", http.StatusBadRequest)
+		return
 	}
 	if !verifySignature(body, h.cfg.WebhookSecret, signature) {
 		logger.Error().Msg("invalid webhook signature")
@@ -66,21 +65,9 @@ func (h *handler) webhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var wg sync.WaitGroup
-	for _, bot := range h.cfg.Telegram.Bots {
-		for _, client := range bot.Clients {
-			wg.Add(1)
-			go func(client config.Client, token, text string) {
-				defer wg.Done()
-				if err := h.sender.Send(token, client.ChatID, text); err != nil {
-					logger.Error().Str("client", client.Name).Str("bot", token[:5]).Err(err).Msg("send message")
-				}
-			}(client, bot.Token, message.String())
-		}
-	}
-	wg.Wait()
+	h.notifier.Broadcast(r.Context(), h.cfg.Recipients, message.String())
 
-	logger.Info().Msgf("Event '%s' processed and sent to configured chats.", eventName)
+	logger.Info().Str("event", eventName).Int("recipients", len(h.cfg.Recipients)).Msg("Event processed and broadcasted.")
 	w.WriteHeader(http.StatusOK)
 }
 

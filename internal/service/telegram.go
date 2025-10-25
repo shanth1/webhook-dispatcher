@@ -2,25 +2,32 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/shanth1/telehook/internal/config"
 )
+
+var _ Sender = (*TelegramSender)(nil)
 
 type TelegramSender struct {
 	client *http.Client
+	token  string
 }
 
-func NewTelegramSender() *TelegramSender {
+func NewTelegramSender(cfg config.TelegramSettings) *TelegramSender {
 	return &TelegramSender{
 		client: &http.Client{Timeout: 10 * time.Second},
+		token:  cfg.Token,
 	}
 }
 
-func (s *TelegramSender) Send(token, chatID, text string) error {
-	apiURL := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", token)
+func (s *TelegramSender) Send(ctx context.Context, chatID string, text string) error {
+	apiURL := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", s.token)
 
 	payload := map[string]string{
 		"chat_id": chatID,
@@ -31,7 +38,7 @@ func (s *TelegramSender) Send(token, chatID, text string) error {
 		return fmt.Errorf("failed to marshal json payload: %w", err)
 	}
 
-	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(jsonPayload))
+	req, err := http.NewRequestWithContext(ctx, "POST", apiURL, bytes.NewBuffer(jsonPayload))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}

@@ -19,9 +19,12 @@ func Run(ctx, shutdownCtx context.Context, cfg *config.Config) {
 		logger.Fatal().Err(err).Msg("load templates")
 	}
 
-	telegramSender := service.NewTelegramSender()
+	notifier, err := service.NewNotifier(cfg, logger)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("initialize notifier service")
+	}
 
-	handler := handler.New(cfg, templates, telegramSender, logger)
+	handler := handler.New(cfg, templates, notifier, logger)
 
 	mux := http.NewServeMux()
 	mux.Handle("/webhook", handler)
@@ -32,7 +35,7 @@ func Run(ctx, shutdownCtx context.Context, cfg *config.Config) {
 	}
 
 	go func() {
-		logger.Info().Msgf("staring server on :%s", cfg.Addr)
+		logger.Info().Msgf("staring server on %s", cfg.Addr)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal().Err(err).Msg("start server")
 		}
