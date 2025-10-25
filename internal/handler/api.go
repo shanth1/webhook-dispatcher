@@ -33,6 +33,18 @@ func (h *handler) webhookHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	signature := r.Header.Get("X-Hub-Signature-256")
+	if signature == "" {
+		logger.Warn().Msg("signature is empty")
+		http.Error(w, "Signature is empty", http.StatusBadRequest)
+		return
+	}
+	if !verifySignature(body, h.cfg.WebhookSecret, signature) {
+		logger.Error().Msg("invalid webhook signature")
+		http.Error(w, "Invalid signature", http.StatusForbidden)
+		return
+	}
+
 	form, err := url.ParseQuery(string(body))
 	if err != nil {
 		logger.Error().Err(err).Msg("parsing form payload")
@@ -44,18 +56,6 @@ func (h *handler) webhookHandler(w http.ResponseWriter, r *http.Request) {
 	if payloadJSON == "" {
 		logger.Error().Msg("payload field is empty")
 		http.Error(w, "Payload field is empty", http.StatusBadRequest)
-		return
-	}
-
-	signature := r.Header.Get("X-Hub-Signature-256")
-	if signature == "" {
-		logger.Warn().Msg("signature is empty")
-		http.Error(w, "Signature is empty", http.StatusBadRequest)
-		return
-	}
-	if !verifySignature([]byte(payloadJSON), h.cfg.WebhookSecret, signature) {
-		logger.Error().Msg("invalid webhook signature")
-		http.Error(w, "Invalid signature", http.StatusForbidden)
 		return
 	}
 
