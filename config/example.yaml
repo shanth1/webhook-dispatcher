@@ -1,0 +1,34 @@
+addr: ':8080'
+webhook_secret: 'your-super-secret-webhook-string'
+
+senders:
+  - name: 'project-telegram-bot'
+    type: 'telegram'
+    settings:
+      token: 'YOUR_TELEGRAM_BOT_TOKEN_1'
+
+  - name: 'smtp-notifications'
+    type: 'email'
+    settings:
+      host: 'smtp.example.com'
+      port: 587
+      username: 'user@example.com'
+      password: 'your-smtp-password'
+      from: 'GitHub Notifier <no-reply@example.com>'
+
+recipients:
+  - name: 'User One (Telegram)'
+    sender: 'project-telegram-bot'
+    target: '123456789' # Telegram Chat ID
+
+  - name: 'User Two (Telegram)'
+    sender: 'project-telegram-bot'
+    target: '987654321' # Telegram Chat ID
+
+  - name: 'Admin (Email)'
+    sender: 'smtp-notifications'
+    target: 'admin@example.com' # Email address
+
+  - name: 'Project Lead (Email)'
+    sender: 'smtp-notifications'
+    target: 'lead@example.com' # Email address
