@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/shanth1/telehook/internal/config"
+	"github.com/shanth1/gitrelay/internal/config"
 )
 
 var _ Sender = (*TelegramSender)(nil)

@@ -1,4 +1,4 @@
-module github.com/shanth1/telehook
+module github.com/shanth1/gitrelay
 
 go 1.23.2
 

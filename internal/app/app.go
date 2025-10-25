@@ -4,11 +4,11 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/shanth1/gitrelay/internal/config"
+	"github.com/shanth1/gitrelay/internal/handler"
+	"github.com/shanth1/gitrelay/internal/service"
+	"github.com/shanth1/gitrelay/internal/templates"
 	"github.com/shanth1/gotools/log"
-	"github.com/shanth1/telehook/internal/config"
-	"github.com/shanth1/telehook/internal/handler"
-	"github.com/shanth1/telehook/internal/service"
-	"github.com/shanth1/telehook/internal/templates"
 )
 
 func Run(ctx, shutdownCtx context.Context, cfg *config.Config) {

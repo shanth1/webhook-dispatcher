@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/shanth1/gotools/log"
-	"github.com/shanth1/telehook/internal/config"
+	"github.com/shanth1/gitrelay/internal/config"
 )
 
 type Notifier struct {

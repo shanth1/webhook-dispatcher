@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/shanth1/gitrelay/internal/config"
+	"github.com/shanth1/gitrelay/internal/service"
 	"github.com/shanth1/gotools/log"
-	"github.com/shanth1/telehook/internal/config"
-	"github.com/shanth1/telehook/internal/service"
 )
 
 type handler struct {

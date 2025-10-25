@@ -3,7 +3,7 @@ package templates
 import (
 	"html/template"
 
-	"github.com/shanth1/telehook/templates"
+	"github.com/shanth1/gitrelay/templates"
 )
 
 func LoadTemplates() (*template.Template, error) {
