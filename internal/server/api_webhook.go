@@ -1,4 +1,4 @@
-package handler
+package server
 
 import (
 	"bytes"
@@ -13,14 +13,14 @@ import (
 	"github.com/shanth1/gotools/log"
 )
 
-func (h *handler) webhookHandler(w http.ResponseWriter, r *http.Request) {
-	logger := h.logger.With(
+func (s *server) handleWebhook(w http.ResponseWriter, r *http.Request) {
+	logger := s.logger.With(
 		log.Str("method", r.Method),
 		log.Str("remote_addr", r.RemoteAddr),
 	)
 
 	if r.Method != http.MethodPost {
-		logger.Warn().Msg("invalid request method")
+		s.logger.Warn().Msg("invalid request method")
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
@@ -39,7 +39,7 @@ func (h *handler) webhookHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Signature is empty", http.StatusBadRequest)
 		return
 	}
-	if !verifySignature(body, h.cfg.WebhookSecret, signature) {
+	if !verifySignature(body, s.cfg.WebhookSecret, signature) {
 		logger.Error().Msg("invalid webhook signature")
 		http.Error(w, "Invalid signature", http.StatusForbidden)
 		return
@@ -70,9 +70,9 @@ func (h *handler) webhookHandler(w http.ResponseWriter, r *http.Request) {
 
 	var message bytes.Buffer
 	templateName := eventName + ".tmpl"
-	tmpl := h.templates.Lookup(templateName)
+	tmpl := s.templates.Lookup(templateName)
 	if tmpl == nil {
-		tmpl = h.templates.Lookup("default.tmpl")
+		tmpl = s.templates.Lookup("default.tmpl")
 	}
 	if err := tmpl.Execute(&message, payload); err != nil {
 		logger.Error().Err(err).Msg("executing template")
@@ -80,9 +80,9 @@ func (h *handler) webhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.notifier.Broadcast(r.Context(), h.cfg.Recipients, message.String())
+	s.notifier.Broadcast(r.Context(), s.cfg.Recipients, message.String())
 
-	logger.Info().Str("event", eventName).Int("recipients", len(h.cfg.Recipients)).Msg("Event processed and broadcasted.")
+	logger.Info().Str("event", eventName).Int("recipients", len(s.cfg.Recipients)).Msg("Event processed and broadcasted.")
 	w.WriteHeader(http.StatusOK)
 }
 

@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/shanth1/gitrelay/internal/config"
-	"github.com/shanth1/gitrelay/internal/handler"
+	"github.com/shanth1/gitrelay/internal/server"
 	"github.com/shanth1/gitrelay/internal/service"
 	"github.com/shanth1/gitrelay/internal/templates"
 	"github.com/shanth1/gotools/log"
@@ -24,15 +24,7 @@ func Run(ctx, shutdownCtx context.Context, cfg *config.Config) {
 		logger.Fatal().Err(err).Msg("initialize notifier service")
 	}
 
-	handler := handler.New(cfg, templates, notifier, logger)
-
-	mux := http.NewServeMux()
-	mux.Handle("/webhook", handler)
-
-	server := &http.Server{
-		Addr:    cfg.Addr,
-		Handler: mux,
-	}
+	server := server.New(cfg, templates, notifier, logger)
 
 	go func() {
 		logger.Info().Msgf("staring server on %s", cfg.Addr)
