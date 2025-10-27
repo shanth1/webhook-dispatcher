@@ -1,12 +1,12 @@
-package service
+package notifier
 
 import (
 	"context"
 	"fmt"
 	"sync"
 
-	"github.com/shanth1/gotools/log"
 	"github.com/shanth1/gitrelay/internal/config"
+	"github.com/shanth1/gotools/log"
 )
 
 type Notifier struct {

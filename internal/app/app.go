@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/shanth1/gitrelay/internal/config"
+	"github.com/shanth1/gitrelay/internal/notifier"
 	"github.com/shanth1/gitrelay/internal/server"
-	"github.com/shanth1/gitrelay/internal/service"
 	"github.com/shanth1/gitrelay/internal/templates"
 	"github.com/shanth1/gotools/log"
 )
@@ -19,7 +19,7 @@ func Run(ctx, shutdownCtx context.Context, cfg *config.Config) {
 		logger.Fatal().Err(err).Msg("load templates")
 	}
 
-	notifier, err := service.NewNotifier(cfg, logger)
+	notifier, err := notifier.NewNotifier(cfg, logger)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("initialize notifier service")
 	}

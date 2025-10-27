@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/shanth1/gitrelay/internal/config"
-	"github.com/shanth1/gitrelay/internal/service"
+	"github.com/shanth1/gitrelay/internal/notifier"
 	"github.com/shanth1/gotools/log"
 )
 
@@ -14,11 +14,11 @@ type server struct {
 	cfg        *config.Config
 	logger     log.Logger
 	templates  *template.Template
-	notifier   *service.Notifier
+	notifier   *notifier.Notifier
 	httpServer *http.Server
 }
 
-func New(cfg *config.Config, templates *template.Template, notifier *service.Notifier, logger log.Logger) *server {
+func New(cfg *config.Config, templates *template.Template, notifier *notifier.Notifier, logger log.Logger) *server {
 	s := &server{
 		cfg:       cfg,
 		logger:    logger,
