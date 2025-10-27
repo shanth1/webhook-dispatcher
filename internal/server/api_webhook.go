@@ -18,12 +18,6 @@ func (s *server) handleGithubWebhook(verifier verifier.Verifier) http.HandlerFun
 			log.Str("remote_addr", r.RemoteAddr),
 		)
 
-		if r.Method != http.MethodPost {
-			s.logger.Warn().Msg("invalid request method")
-			http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-			return
-		}
-
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			logger.Error().Err(err).Msg("read request body")
