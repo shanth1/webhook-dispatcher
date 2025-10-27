@@ -7,5 +7,5 @@ import (
 )
 
 func LoadTemplates() (*template.Template, error) {
-	return template.ParseFS(templates.TemplateFiles, "*.tmpl")
+	return template.ParseFS(templates.TemplateFiles, "*/*.tmpl")
 }

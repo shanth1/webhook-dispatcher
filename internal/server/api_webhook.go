@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/shanth1/gitrelay/internal/utils"
 	"github.com/shanth1/gitrelay/internal/verifier"
 	"github.com/shanth1/gotools/log"
 )
@@ -56,10 +57,9 @@ func (s *server) handleGithubWebhook(verifier verifier.Verifier) http.HandlerFun
 		payload["eventName"] = eventName
 
 		var message bytes.Buffer
-		templateName := eventName + ".tmpl"
-		tmpl := s.templates.Lookup(templateName)
+		tmpl := s.templates.Lookup(utils.GetTemplatePath("github", eventName))
 		if tmpl == nil {
-			tmpl = s.templates.Lookup("default.tmpl")
+			tmpl = s.templates.Lookup(utils.GetTemplatePath("github", "default"))
 		}
 		if err := tmpl.Execute(&message, payload); err != nil {
 			logger.Error().Err(err).Msg("executing template")
