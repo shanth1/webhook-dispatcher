@@ -9,6 +9,13 @@ const (
 	SenderTypeEmail    SenderType = "email"
 )
 
+type WebhookType string
+
+const (
+	WebhookTypeGitHub WebhookType = "github"
+	WebhookTypeCustom WebhookType = "custom"
+)
+
 type Recipient struct {
 	Name   string `mapstructure:"name"`
 	Sender string `mapstructure:"sender"`
@@ -19,6 +26,14 @@ type SenderConfig struct {
 	Name     string                 `mapstructure:"name"`
 	Type     SenderType             `mapstructure:"type"`
 	Settings map[string]interface{} `mapstructure:"settings"`
+}
+
+type WebhookConfig struct {
+	Name       string      `mapstructure:"name"`
+	Path       string      `mapstructure:"path"`
+	Type       WebhookType `mapstructure:"type"`
+	Secret     string      `mapstructure:"secret"`
+	Recipients []string    `mapstructure:"recipients"`
 }
 
 type TelegramSettings struct {
@@ -34,10 +49,10 @@ type EmailSettings struct {
 }
 
 type Config struct {
-	Addr          string         `mapstructure:"addr"`
-	WebhookSecret string         `mapstructure:"webhook_secret"`
-	Senders       []SenderConfig `mapstructure:"senders"`
-	Recipients    []Recipient    `mapstructure:"recipients"`
+	Addr       string          `mapstructure:"addr"`
+	Webhooks   []WebhookConfig `mapstructure:"webhooks"`
+	Senders    []SenderConfig  `mapstructure:"senders"`
+	Recipients []Recipient     `mapstructure:"recipients"`
 }
 
 func (sc *SenderConfig) DecodeSenderSettings(v interface{}) error {

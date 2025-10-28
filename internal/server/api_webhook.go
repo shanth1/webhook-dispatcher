@@ -1,63 +1,27 @@
 package server
 
 import (
-	"bytes"
-	"encoding/json"
-	"io"
 	"net/http"
-	"net/url"
 
-	"github.com/shanth1/gitrelay/internal/utils"
+	"github.com/shanth1/gitrelay/internal/config"
+	"github.com/shanth1/gitrelay/internal/processor"
 	"github.com/shanth1/gotools/log"
 )
 
-func (s *server) handleGithubWebhook(w http.ResponseWriter, r *http.Request) {
-	logger := log.FromContext(r.Context())
+func (s *server) handleWebhook(p processor.WebhookProcessor, recipients []config.Recipient) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		logger := log.FromContext(r.Context())
 
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		logger.Error().Err(err).Msg("read request body")
-		http.Error(w, "Can't read request body", http.StatusInternalServerError)
-		return
+		message, err := p.Process(r)
+		if err != nil {
+			logger.Error().Err(err).Msg("failed to process webhook")
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		s.notifier.Broadcast(r.Context(), recipients, message)
+
+		logger.Info().Int("recipients", len(recipients)).Msg("Webhook processed and broadcasted.")
+		w.WriteHeader(http.StatusOK)
 	}
-	defer r.Body.Close()
-
-	form, err := url.ParseQuery(string(body))
-	if err != nil {
-		logger.Error().Err(err).Msg("parsing form payload")
-		http.Error(w, "Error parsing form payload", http.StatusBadRequest)
-		return
-	}
-
-	payloadJSON := form.Get("payload")
-	if payloadJSON == "" {
-		logger.Error().Msg("payload field is empty")
-		http.Error(w, "Payload field is empty", http.StatusBadRequest)
-		return
-	}
-
-	eventName := r.Header.Get("X-GitHub-Event")
-	var payload map[string]interface{}
-	if err := json.Unmarshal([]byte(payloadJSON), &payload); err != nil {
-		logger.Error().Err(err).Msg("parsing json payload")
-		http.Error(w, "Error parsing JSON payload", http.StatusBadRequest)
-		return
-	}
-	payload["eventName"] = eventName
-
-	var message bytes.Buffer
-	tmpl := s.templates.Lookup(utils.GetTemplatePath("github", eventName))
-	if tmpl == nil {
-		tmpl = s.templates.Lookup(utils.GetTemplatePath("github", "default"))
-	}
-	if err := tmpl.Execute(&message, payload); err != nil {
-		logger.Error().Err(err).Msg("executing template")
-		http.Error(w, "Error formatting message", http.StatusInternalServerError)
-		return
-	}
-
-	s.notifier.Broadcast(r.Context(), s.cfg.Recipients, message.String())
-
-	logger.Info().Str("event", eventName).Int("recipients", len(s.cfg.Recipients)).Msg("Event processed and broadcasted.")
-	w.WriteHeader(http.StatusOK)
 }
