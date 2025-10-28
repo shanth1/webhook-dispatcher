@@ -2,9 +2,9 @@ package utils
 
 import (
 	"fmt"
-	"path/filepath"
+	"path"
 )
 
 func GetTemplatePath(adapter, name string) string {
-	return filepath.Join(adapter, fmt.Sprintf("%s.tmpl", name))
+	return path.Join(adapter, fmt.Sprintf("%s.tmpl", name))
 }

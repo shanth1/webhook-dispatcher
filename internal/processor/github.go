@@ -25,7 +25,6 @@ func (p *GithubProcessor) Process(r *http.Request) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to read request body: %w", err)
 	}
-	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	payloadJSON := ""
 	contentType := r.Header.Get("Content-Type")
@@ -51,13 +50,19 @@ func (p *GithubProcessor) Process(r *http.Request) (string, error) {
 	}
 	payload["eventName"] = eventName
 
-	var message bytes.Buffer
-	tmpl := p.templates.Lookup(utils.GetTemplatePath("github", eventName))
-	if tmpl == nil {
-		tmpl = p.templates.Lookup(utils.GetTemplatePath("github", "default"))
+	templateName := utils.GetTemplatePath("github", eventName)
+
+	if p.templates.Lookup(templateName) == nil {
+		templateName = utils.GetTemplatePath("github", "default")
+		if p.templates.Lookup(templateName) == nil {
+			return "", fmt.Errorf("default template '%s' not found", templateName)
+		}
 	}
-	if err := tmpl.Execute(&message, payload); err != nil {
-		return "", fmt.Errorf("error executing template: %w", err)
+
+	var message bytes.Buffer
+	err = p.templates.ExecuteTemplate(&message, templateName, payload)
+	if err != nil {
+		return "", fmt.Errorf("error executing template '%s': %w", templateName, err)
 	}
 
 	return message.String(), nil
