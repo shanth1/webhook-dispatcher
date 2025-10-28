@@ -5,9 +5,9 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/shanth1/gitrelay/internal/config"
-	"github.com/shanth1/gitrelay/internal/notifier"
 	"github.com/shanth1/gotools/log"
+	"github.com/shanth1/hookrelay/internal/config"
+	"github.com/shanth1/hookrelay/internal/notifier"
 )
 
 type server struct {

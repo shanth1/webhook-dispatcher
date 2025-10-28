@@ -3,9 +3,9 @@ package server
 import (
 	"net/http"
 
-	"github.com/shanth1/gitrelay/internal/config"
-	"github.com/shanth1/gitrelay/internal/processor"
 	"github.com/shanth1/gotools/log"
+	"github.com/shanth1/hookrelay/internal/config"
+	"github.com/shanth1/hookrelay/internal/processor"
 )
 
 func (s *server) handleWebhook(p processor.WebhookProcessor, recipients []config.Recipient) http.HandlerFunc {

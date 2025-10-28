@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/shanth1/gitrelay/internal/config"
-	"github.com/shanth1/gitrelay/internal/middleware"
-	"github.com/shanth1/gitrelay/internal/processor"
-	"github.com/shanth1/gitrelay/internal/verifier"
+	"github.com/shanth1/hookrelay/internal/config"
+	"github.com/shanth1/hookrelay/internal/middleware"
+	"github.com/shanth1/hookrelay/internal/processor"
+	"github.com/shanth1/hookrelay/internal/verifier"
 )
 
 func (s *server) routes() http.Handler {

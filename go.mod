@@ -1,4 +1,4 @@
-module github.com/shanth1/gitrelay
+module github.com/shanth1/hookrelay
 
 go 1.23.2
 

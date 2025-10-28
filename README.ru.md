@@ -2,8 +2,8 @@
 
 [English Version](README.md)
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/shanth1/gitrelay)
-[![Go Report Card](https://goreportcard.com/badge/github.com/shanth1/gitrelay)](https://goreportcard.com/report/github.com/shanth1/gitrelay)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/shanth1/hookrelay)
+[![Go Report Card](https://goreportcard.com/badge/github.com/shanth1/hookrelay)](https://goreportcard.com/report/github.com/shanth1/hookrelay)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Гибкий сервис на Go для получения вебхуков от GitHub и их отправки в виде форматированных уведомлений в различные каналы, такие как Telegram и Email.

@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/shanth1/gitrelay/internal/utils"
+	"github.com/shanth1/hookrelay/internal/utils"
 )
 
 type GithubProcessor struct {

@@ -8,8 +8,8 @@ import (
 	"github.com/shanth1/gotools/ctx"
 	"github.com/shanth1/gotools/flags"
 	"github.com/shanth1/gotools/log"
-	"github.com/shanth1/gitrelay/internal/app"
-	"github.com/shanth1/gitrelay/internal/config"
+	"github.com/shanth1/hookrelay/internal/app"
+	"github.com/shanth1/hookrelay/internal/config"
 )
 
 type Flags struct {

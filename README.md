@@ -2,8 +2,8 @@
 
 [Russian Version](README.ru.md)
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/shanth1/gitrelay)
-[![Go Report Card](https://goreportcard.com/badge/github.com/shanth1/gitrelay)](https://goreportcard.com/report/github.com/shanth1/gitrelay)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/shanth1/hookrelay)
+[![Go Report Card](https://goreportcard.com/badge/github.com/shanth1/hookrelay)](https://goreportcard.com/report/github.com/shanth1/hookrelay)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A flexible Go-based service to receive GitHub webhooks and dispatch them as formatted notifications to various channels like Telegram and Email.

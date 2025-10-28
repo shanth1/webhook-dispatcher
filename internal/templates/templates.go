@@ -4,7 +4,7 @@ import (
 	"html/template"
 	"io/fs"
 
-	"github.com/shanth1/gitrelay/templates"
+	"github.com/shanth1/hookrelay/templates"
 )
 
 func LoadTemplates() (*template.Template, error) {

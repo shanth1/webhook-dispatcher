@@ -4,11 +4,11 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/shanth1/gitrelay/internal/config"
-	"github.com/shanth1/gitrelay/internal/notifier"
-	"github.com/shanth1/gitrelay/internal/server"
-	"github.com/shanth1/gitrelay/internal/templates"
 	"github.com/shanth1/gotools/log"
+	"github.com/shanth1/hookrelay/internal/config"
+	"github.com/shanth1/hookrelay/internal/notifier"
+	"github.com/shanth1/hookrelay/internal/server"
+	"github.com/shanth1/hookrelay/internal/templates"
 )
 
 func Run(ctx, shutdownCtx context.Context, cfg *config.Config) {

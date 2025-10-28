@@ -5,8 +5,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/shanth1/gitrelay/internal/verifier"
 	"github.com/shanth1/gotools/log"
+	"github.com/shanth1/hookrelay/internal/verifier"
 )
 
 func WithVerification(v verifier.Verifier) Middleware {
