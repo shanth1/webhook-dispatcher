@@ -7,10 +7,7 @@ import (
 )
 
 func (s *server) handleRoot(w http.ResponseWriter, r *http.Request) {
-	logger := s.logger.With(
-		log.Str("method", r.Method),
-		log.Str("remote_addr", r.RemoteAddr),
-	)
+	logger := log.FromContext(r.Context())
 
 	if r.URL.Path != "/" {
 		logger.Info().Str("path", r.URL.Path).Msg("unknown root")

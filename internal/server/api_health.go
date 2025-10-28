@@ -7,10 +7,7 @@ import (
 )
 
 func (s *server) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
-	logger := s.logger.With(
-		log.Str("method", r.Method),
-		log.Str("remote_addr", r.RemoteAddr),
-	)
+	logger := log.FromContext(r.Context())
 
 	logger.Info().Msg("health check requested")
 	w.WriteHeader(http.StatusOK)
