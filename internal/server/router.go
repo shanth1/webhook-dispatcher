@@ -6,16 +6,11 @@ import (
 
 	"github.com/shanth1/hookrelay/internal/config"
 	"github.com/shanth1/hookrelay/internal/middleware"
-	"github.com/shanth1/hookrelay/internal/processor"
 	"github.com/shanth1/hookrelay/internal/verifier"
 )
 
 func (s *server) routes() http.Handler {
 	mux := http.NewServeMux()
-
-	githubProcessor := processor.NewGithubProcessor(s.templates)
-	kanboardProcessor := processor.NewKanboardProcessor(s.templates)
-	customProcessor := processor.NewCustomProcessor()
 
 	recipientMap := make(map[string]config.Recipient, len(s.cfg.Recipients))
 	for _, r := range s.cfg.Recipients {
@@ -23,22 +18,20 @@ func (s *server) routes() http.Handler {
 	}
 
 	for _, hookCfg := range s.cfg.Webhooks {
-		var v verifier.Verifier
-		var p processor.WebhookProcessor
+		p, ok := s.processors[hookCfg.Type]
+		if !ok {
+			s.logger.Error().Str("type", string(hookCfg.Type)).Msg("unknown webhook type in config, skipping")
+			continue
+		}
 
+		var v verifier.Verifier
 		switch hookCfg.Type {
 		case config.WebhookTypeGitHub:
 			v = &verifier.GithubVerifier{Secret: hookCfg.Secret}
-			p = githubProcessor
 		case config.WebhookTypeKanboard:
 			v = &verifier.KanboardVerifier{Secret: hookCfg.Secret}
-			p = kanboardProcessor
 		case config.WebhookTypeCustom:
 			v = &verifier.CustomVerifier{Secret: hookCfg.Secret}
-			p = customProcessor
-		default:
-			s.logger.Error().Str("type", string(hookCfg.Type)).Msg("unknown webhook type in config, skipping")
-			continue
 		}
 
 		resolvedRecipients := make([]config.Recipient, 0, len(hookCfg.Recipients))
@@ -72,6 +65,11 @@ func (s *server) routes() http.Handler {
 		)
 		mux.Handle(fmt.Sprintf("POST %s", hookCfg.Path), handlerChain)
 	}
+
+	mux.Handle("GET /adapters", middleware.Chain(
+		http.HandlerFunc(s.handleAdaptersList),
+		middleware.WithLogger(s.logger),
+	))
 
 	mux.Handle("GET /health", middleware.Chain(
 		http.HandlerFunc(s.handleHealthCheck),

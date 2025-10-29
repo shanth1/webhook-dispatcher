@@ -8,6 +8,7 @@ import (
 	"github.com/shanth1/gotools/log"
 	"github.com/shanth1/hookrelay/internal/config"
 	"github.com/shanth1/hookrelay/internal/notifier"
+	"github.com/shanth1/hookrelay/internal/processor"
 )
 
 type server struct {
@@ -16,6 +17,7 @@ type server struct {
 	templates  *template.Template
 	notifier   *notifier.Notifier
 	httpServer *http.Server
+	processors map[config.WebhookType]processor.WebhookProcessor
 }
 
 func New(cfg *config.Config, templates *template.Template, notifier *notifier.Notifier, logger log.Logger) *server {
@@ -24,6 +26,12 @@ func New(cfg *config.Config, templates *template.Template, notifier *notifier.No
 		logger:    logger,
 		templates: templates,
 		notifier:  notifier,
+	}
+
+	s.processors = map[config.WebhookType]processor.WebhookProcessor{
+		config.WebhookTypeGitHub:   processor.NewGithubProcessor(templates),
+		config.WebhookTypeKanboard: processor.NewKanboardProcessor(templates),
+		config.WebhookTypeCustom:   processor.NewCustomProcessor(),
 	}
 
 	httpServer := &http.Server{
