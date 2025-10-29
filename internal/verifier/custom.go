@@ -7,7 +7,7 @@ type CustomVerifier struct {
 }
 
 func (v *CustomVerifier) Verify(r *http.Request, _ []byte) bool {
-	providerSecret := r.Header.Get("X-Auth")
+	providerSecret := r.Header.Get("X-Auth-Token")
 
 	return providerSecret != "" && providerSecret == v.Secret
 }

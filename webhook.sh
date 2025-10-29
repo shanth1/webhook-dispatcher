@@ -243,7 +243,7 @@ case "$MODE" in
         echo "URL:     $TARGET_URL"
         echo "Message: '$MESSAGE'"
 
-        # The custom verifier uses a simple secret in the X-Auth header
+        # The custom verifier uses a simple secret in the X-Auth-Token header
         REQUEST_BODY="$MESSAGE"
         SIGNATURE="$CUSTOM_SECRET"
         echo "Auth Header: $SIGNATURE"
@@ -252,7 +252,7 @@ case "$MODE" in
         CURL_CMD=(
             curl -v -X POST \
             -H "Content-Type: text/plain" \
-            -H "X-Auth: ${SIGNATURE}" \
+            -H "X-Auth-Token: ${SIGNATURE}" \
             -d "${REQUEST_BODY}" \
             "${TARGET_URL}"
         )
