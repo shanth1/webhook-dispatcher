@@ -1,5 +1,28 @@
 addr: ':8080'
-webhook_secret: 'your-super-secret-webhook-string'
+
+webhooks:
+  - name: 'github-repo-events'
+    path: '/webhook/github'
+    type: 'github'
+    secret: 'your-super-secret-github-string'
+    recipients:
+      - 'Dev Team (Telegram)'
+      - 'Admin (Email)'
+
+  - name: 'kanboard-project-updates'
+    path: '/webhook/kanboard'
+    type: 'kanboard'
+    secret: 'your-kanboard-secret-token'
+    recipients:
+      - 'Dev Team (Telegram)'
+
+  - name: 'custom-service-alerts'
+    path: '/webhook/custom'
+    type: 'custom'
+    secret: 'secret-for-custom-messages'
+    recipients:
+      - 'Admin (Email)'
+      - 'On-call Engineer'
 
 senders:
   - name: 'project-telegram-bot'
@@ -17,18 +40,14 @@ senders:
       from: 'GitHub Notifier <no-reply@example.com>'
 
 recipients:
-  - name: 'User One (Telegram)'
+  - name: 'Dev Team (Telegram)'
     sender: 'project-telegram-bot'
-    target: '123456789' # Telegram Chat ID
-
-  - name: 'User Two (Telegram)'
-    sender: 'project-telegram-bot'
-    target: '987654321' # Telegram Chat ID
+    target: '123456789'
 
   - name: 'Admin (Email)'
     sender: 'smtp-notifications'
-    target: 'admin@example.com' # Email address
+    target: 'admin@example.com'
 
-  - name: 'Project Lead (Email)'
-    sender: 'smtp-notifications'
-    target: 'lead@example.com' # Email address
+  - name: 'On-call Engineer'
+    sender: 'project-telegram-bot'
+    target: '987654321'

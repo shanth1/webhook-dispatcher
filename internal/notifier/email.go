@@ -1,11 +1,11 @@
-package service
+package notifier
 
 import (
 	"context"
 	"fmt"
 	"net/smtp"
 
-	"github.com/shanth1/gitrelay/internal/config"
+	"github.com/shanth1/hookrelay/internal/config"
 )
 
 var _ Sender = (*EmailSender)(nil)

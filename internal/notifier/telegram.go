@@ -1,4 +1,4 @@
-package service
+package notifier
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/shanth1/gitrelay/internal/config"
+	"github.com/shanth1/hookrelay/internal/config"
 )
 
 var _ Sender = (*TelegramSender)(nil)

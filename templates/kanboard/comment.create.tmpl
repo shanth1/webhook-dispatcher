@@ -1,0 +1,7 @@
+💬 New Comment in {{ .EventData.task.project_name }}
+
+Task: {{ .EventData.task.title }}
+By: {{ .EventData.comment.username }}
+"{{ .EventData.comment.comment }}"
+
+Link: [View Task]({{ .EventData.task.url }})

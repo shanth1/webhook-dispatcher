@@ -1,192 +1,273 @@
 #!/bin/bash
 
-# --- CONFIGURATION ---
-WEBHOOK_URL="http://localhost:8080/webhook"
-WEBHOOK_SECRET='your-super-secret-webhook-string'
-DELAY=1 # Delay between requests in seconds
+# ==============================================================================
+# Webhook Test Script
+#
+# A script to test the webhook dispatcher service by emulating
+# webhook requests from different providers.
+#
+# Dependencies: curl, openssl, jq
+#
+# Usage:
+#   ./webhook.sh <mode> <arg2> [arg3]
+#
+# Modes:
+#   - github: Emulates a GitHub webhook request.
+#     - arg2: The GitHub event name (e.g., 'push', 'star', 'issues').
+#     - arg3 (optional): Path to a JSON file containing the payload.
+#                       If not provided, a default payload for the event is used.
+#
+#   - kanboard: Emulates a Kanboard webhook request.
+#     - arg2: The Kanboard event name (e.g., 'task.create', 'task.move').
+#     - arg3 (optional): Path to a JSON file containing the payload.
+#
+#   - custom: Sends a simple text-based webhook.
+#     - arg2: The raw text message to send as the request body.
+#
+# Examples:
+#   # Send a default GitHub 'push' event
+#   ./webhook.sh github push
+#
+#   # Send a Kanboard 'task.create' event
+#   ./webhook.sh kanboard task.create
+#
+#   # Send a GitHub 'issues' event using a custom payload from a file
+#   ./webhook.sh github issues ./payloads/my_issue.json
+#
+#   # Send a custom alert message
+#   ./webhook.sh custom "ALERT: Service is down!"
+#
+# ==============================================================================
 
-# --- HELPER FUNCTION FOR URL ENCODING ---
-urlencode() {
-    local lang=C  # Используем стандартную локаль
-    local length="${#1}"
-    for (( i = 0; i < length; i++ )); do
-        local c="${1:i:1}"
-        case $c in
-            [a-zA-Z0-9.~_-]) printf "%s" "$c" ;;
-            *) printf '%%%02X' "'$c" ;; # Кодируем все остальные символы
-        esac
-    done
+# --- Script Configuration ---
+# Ensure the script exits on any error
+set -e
+set -o pipefail
+
+# --- Service Configuration ---
+# These should match the values in your 'config/example.yaml'
+
+# Base URL of the running service
+BASE_URL="http://localhost:8080"
+
+# GitHub Webhook Configuration
+GITHUB_PATH="/webhook/github"
+GITHUB_SECRET="your-super-secret-github-string"
+
+# Kanboard Webhook Configuration
+KANBOARD_PATH="/webhook/kanboard"
+KANBOARD_SECRET="your-kanboard-secret-token"
+
+# Custom Webhook Configuration
+CUSTOM_PATH="/webhook/custom"
+CUSTOM_SECRET="secret-for-custom-messages"
+
+# --- Helper Functions ---
+
+# Function to print usage instructions
+print_usage() {
+    echo "Usage: $0 <mode> <arg2> [arg3]"
+    echo ""
+    echo "Modes:"
+    echo "  github <event_name> [json_file]      - Emulate a GitHub webhook."
+    echo "  kanboard <event_name> [json_file]    - Emulate a Kanboard webhook."
+    echo "  custom <'message'>                   - Send a custom plain text webhook."
+    echo ""
+    echo "Examples:"
+    echo "  $0 github push"
+    echo "  $0 kanboard task.create"
+    echo "  $0 github issues ./payload.json"
+    echo "  $0 custom 'This is a test message'"
+    exit 1
 }
 
-
-# --- FUNCTION TO SEND REQUEST ---
-send_request() {
-  local EVENT_TYPE=$1
-  local PAYLOAD=$2
-
-  # Формируем тело запроса для application/x-www-form-urlencoded
-  local FORM_BODY="payload=$(urlencode "$PAYLOAD")"
-
-  # Генерируем подпись на основе ИСХОДНОГО JSON-пейлоада
-  local SIGNATURE_256=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | sed 's/^.* //')
-
-  echo "----------------------------------------"
-  echo "Sending event: $EVENT_TYPE"
-
-  # Отправляем CURL-запрос с новым Content-Type и телом
-  curl --silent --show-error \
-       -X POST \
-       -H "Content-Type: application/x-www-form-urlencoded" \
-       -H "X-GitHub-Event: $EVENT_TYPE" \
-       -H "X-Hub-Signature-256: sha256=$SIGNATURE_256" \
-       -d "$FORM_BODY" \
-       "$WEBHOOK_URL"
-
-  echo
-  echo "Event '$EVENT_TYPE' sent."
-}
-
-# --- PAYLOADS FOR DIFFERENT EVENTS (Без изменений) ---
-
-# PING EVENT PAYLOAD
-get_ping_payload() {
-  read -r -d '' PAYLOAD <<EOF
-{
-  "zen": "Approachable is better than simple.",
-  "hook_id": 12345678,
-  "eventName": "ping",
-  "repository": { "full_name": "your-username/my-test-repo" },
-  "sender": { "login": "your-username" }
-}
-EOF
-  echo "$PAYLOAD"
-}
-
-# PUSH EVENT PAYLOAD
-get_push_payload() {
-  read -r -d '' PAYLOAD <<EOF
-{
-  "ref": "refs/heads/main",
-  "after": "c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
-  "repository": { "full_name": "your-username/my-test-repo" },
-  "pusher": { "name": "your-username" },
-  "sender": { "login": "your-username" },
-  "commits": [{ "message": "feat: Add new feature" }]
-}
-EOF
-  echo "$PAYLOAD"
-}
-
-# ISSUES EVENT PAYLOAD
-get_issues_payload() {
-  read -r -d '' PAYLOAD <<EOF
-{
-  "action": "opened",
-  "issue": { "number": 13, "title": "Found a bug" },
-  "repository": { "full_name": "your-username/my-test-repo" },
-  "sender": { "login": "your-username" }
-}
-EOF
-  echo "$PAYLOAD"
-}
-
-# PULL_REQUEST EVENT PAYLOAD
-get_pull_request_payload() {
-  read -r -d '' PAYLOAD <<EOF
-{
-  "action": "opened",
-  "number": 14,
-  "pull_request": { "title": "Update documentation", "user": { "login": "your-username" } },
-  "repository": { "full_name": "your-username/my-test-repo" },
-  "sender": { "login": "your-username" }
-}
-EOF
-  echo "$PAYLOAD"
-}
-
-# ISSUE_COMMENT EVENT PAYLOAD
-get_issue_comment_payload() {
-  read -r -d '' PAYLOAD <<EOF
-{
-  "action": "created",
-  "issue": { "number": 13 },
-  "comment": { "body": "Thanks for reporting!" },
-  "repository": { "full_name": "your-username/my-test-repo" },
-  "sender": { "login": "your-username" }
-}
-EOF
-  echo "$PAYLOAD"
-}
-
-# RELEASE EVENT PAYLOAD
-get_release_payload() {
-  read -r -d '' PAYLOAD <<EOF
-{
-  "action": "published",
-  "release": { "tag_name": "v1.0.0", "name": "Version 1.0.0" },
-  "repository": { "full_name": "your-username/my-test-repo" },
-  "sender": { "login": "your-username" }
-}
-EOF
-  echo "$PAYLOAD"
-}
-
-# FORK EVENT PAYLOAD
-get_fork_payload() {
-  read -r -d '' PAYLOAD <<EOF
-{
-  "forkee": { "full_name": "another-user/my-test-repo" },
-  "repository": { "full_name": "your-username/my-test-repo" },
-  "sender": { "login": "another-user" }
-}
-EOF
-  echo "$PAYLOAD"
-}
-
-# STAR EVENT PAYLOAD
-get_star_payload() {
-  read -r -d '' PAYLOAD <<EOF
-{
-  "action": "created",
-  "repository": { "full_name": "your-username/my-test-repo" },
-  "sender": { "login": "new-stargazer" }
-}
-EOF
-  echo "$PAYLOAD"
-}
-
-# --- MAIN LOGIC (Без изменений) ---
-main() {
-  EVENT_TO_SEND=$1
-
-  if [ -n "$EVENT_TO_SEND" ]; then
-    # Send a specific event if one is provided
-    case $EVENT_TO_SEND in
-      ping) send_request "ping" "$(get_ping_payload)" ;;
-      push) send_request "push" "$(get_push_payload)" ;;
-      issues) send_request "issues" "$(get_issues_payload)" ;;
-      pull_request) send_request "pull_request" "$(get_pull_request_payload)" ;;
-      issue_comment) send_request "issue_comment" "$(get_issue_comment_payload)" ;;
-      release) send_request "release" "$(get_release_payload)" ;;
-      fork) send_request "fork" "$(get_fork_payload)" ;;
-      star) send_request "star" "$(get_star_payload)" ;;
-      *) echo "Error: Unknown event type '$EVENT_TO_SEND'" && exit 1 ;;
+# Function to provide default JSON payloads for GitHub events
+get_default_github_payload() {
+    local event_name=$1
+    case "$event_name" in
+        "push")
+            jq -n \
+              '{ "ref": "refs/heads/main", "repository": { "full_name": "test/repo", "html_url": "https://github.com/test/repo" }, "sender": { "login": "testuser", "html_url": "https://github.com/testuser" }, "commits": [ { "id": "abc1234", "message": "feat: Add new feature", "author": { "name": "Test User" }, "url": "https://github.com/test/repo/commit/abc1234" } ] }'
+            ;;
+        "star")
+            jq -n \
+              '{ "action": "created", "repository": { "full_name": "test/repo", "stargazers_count": 101, "html_url": "https://github.com/test/repo" }, "sender": { "login": "another-user", "html_url": "https://github.com/another-user" } }'
+            ;;
+        *)
+            echo "{\"message\":\"Default payload for event '$event_name' not found.\"}" | jq '.'
+            ;;
     esac
-  else
-    # Send all event types sequentially
-    echo "Starting to send all test events..."
-    send_request "ping" "$(get_ping_payload)" && sleep $DELAY
-    send_request "push" "$(get_push_payload)" && sleep $DELAY
-    send_request "issues" "$(get_issues_payload)" && sleep $DELAY
-    send_request "pull_request" "$(get_pull_request_payload)" && sleep $DELAY
-    send_request "issue_comment" "$(get_issue_comment_payload)" && sleep $DELAY
-    send_request "release" "$(get_release_payload)" && sleep $DELAY
-    send_request "fork" "$(get_fork_payload)" && sleep $DELAY
-    send_request "star" "$(get_star_payload)"
-  fi
-
-  echo "----------------------------------------"
-  echo "Testing completed"
 }
 
-main "$@"
+# Function to provide default JSON payloads for Kanboard events
+get_default_kanboard_payload() {
+    local event_name=$1
+    case "$event_name" in
+        "task.create")
+            jq -n \
+              --arg event_name "$event_name" \
+              '{ "event_name": $event_name, "event_data": { "task": { "id": "101", "title": "Implement new API endpoint", "project_name": "My Awesome Project", "creator_username": "admin", "url": "http://kanboard.local/?controller=TaskViewController&action=show&task_id=101" } } }'
+            ;;
+        "task.move")
+            jq -n \
+              --arg event_name "$event_name" \
+              '{ "event_name": $event_name, "event_data": { "task": { "id": "102", "title": "Refactor database module", "project_name": "My Awesome Project", "column_name": "In Progress", "url": "http://kanboard.local/?controller=TaskViewController&action=show&task_id=102" } } }'
+            ;;
+        *)
+            jq -n \
+              --arg event_name "$event_name" \
+              '{ "event_name": $event_name, "event_data": { "message": "Default payload" } }'
+            ;;
+    esac
+}
+
+# --- Main Logic ---
+
+# Check for required dependencies
+for cmd in curl openssl jq; do
+    if ! command -v $cmd &> /dev/null; then
+        echo "Error: Required command '$cmd' is not installed." >&2
+        exit 1
+    fi
+done
+
+# Check for minimum number of arguments
+if [ "$#" -lt 2 ]; then
+    echo "Error: Not enough arguments provided." >&2
+    print_usage
+fi
+
+MODE=$1
+shift
+
+case "$MODE" in
+    "github")
+        EVENT_NAME=$1
+        JSON_FILE=$2
+        TARGET_URL="${BASE_URL}${GITHUB_PATH}"
+
+        if [ -z "$EVENT_NAME" ]; then
+            echo "Error: GitHub event name is required for 'github' mode." >&2
+            print_usage
+        fi
+
+        echo "--- GitHub Mode ---"
+        echo "Event: $EVENT_NAME"
+        echo "URL:   $TARGET_URL"
+
+        # Determine the JSON payload
+        if [ -n "$JSON_FILE" ]; then
+            if [ ! -f "$JSON_FILE" ]; then
+                echo "Error: JSON file not found at '$JSON_FILE'" >&2
+                exit 1
+            fi
+            echo "Payload: from file '$JSON_FILE'"
+            JSON_PAYLOAD=$(cat "$JSON_FILE")
+        else
+            echo "Payload: using default for '$EVENT_NAME'"
+            JSON_PAYLOAD=$(get_default_github_payload "$EVENT_NAME")
+        fi
+
+        # GitHub sends the payload as a URL-encoded form field `payload={...}`
+        # We need to URL-encode the JSON string first.
+        URL_ENCODED_JSON=$(echo -n "$JSON_PAYLOAD" | jq -sRr @uri)
+        REQUEST_BODY="payload=${URL_ENCODED_JSON}"
+
+        # Calculate the HMAC-SHA256 signature
+        # The signature is calculated on the raw request body, not just the JSON.
+        SIGNATURE="sha256=$(echo -n "$REQUEST_BODY" | openssl dgst -sha256 -hmac "$GITHUB_SECRET" -binary | xxd -p -c 256)"
+        echo "Signature: $SIGNATURE"
+
+        # Construct and execute the curl command
+        CURL_CMD=(
+            curl -v -X POST \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -H "X-GitHub-Event: ${EVENT_NAME}" \
+            -H "X-Hub-Signature-256: ${SIGNATURE}" \
+            -d "${REQUEST_BODY}" \
+            "${TARGET_URL}"
+        )
+        ;;
+
+    "kanboard")
+        EVENT_NAME=$1
+        JSON_FILE=$2
+        TARGET_URL="${BASE_URL}${KANBOARD_PATH}?token=${KANBOARD_SECRET}"
+
+        if [ -z "$EVENT_NAME" ]; then
+            echo "Error: Kanboard event name is required for 'kanboard' mode." >&2
+            print_usage
+        fi
+
+        echo "--- Kanboard Mode ---"
+        echo "Event: $EVENT_NAME"
+        echo "URL:   $TARGET_URL"
+        echo "Auth Method: URL query token"
+
+        # Determine the JSON payload
+        if [ -n "$JSON_FILE" ]; then
+            if [ ! -f "$JSON_FILE" ]; then
+                echo "Error: JSON file not found at '$JSON_FILE'" >&2
+                exit 1
+            fi
+            echo "Payload: from file '$JSON_FILE'"
+            JSON_PAYLOAD=$(cat "$JSON_FILE")
+        else
+            echo "Payload: using default for '$EVENT_NAME'"
+            JSON_PAYLOAD=$(get_default_kanboard_payload "$EVENT_NAME")
+        fi
+
+        REQUEST_BODY="$JSON_PAYLOAD"
+
+        # Construct and execute the curl command
+        CURL_CMD=(
+            curl -v -X POST \
+            -H "Content-Type: application/json" \
+            -d "${REQUEST_BODY}" \
+            "${TARGET_URL}"
+        )
+        ;;
+
+    "custom")
+        MESSAGE=$1
+        TARGET_URL="${BASE_URL}${CUSTOM_PATH}"
+
+        if [ -z "$MESSAGE" ]; then
+            echo "Error: A message is required for 'custom' mode." >&2
+            print_usage
+        fi
+
+        echo "--- Custom Mode ---"
+        echo "URL:     $TARGET_URL"
+        echo "Message: '$MESSAGE'"
+
+        REQUEST_BODY="$MESSAGE"
+        SIGNATURE="$CUSTOM_SECRET"
+        echo "Auth Header: $SIGNATURE"
+
+        # Construct and execute the curl command
+        CURL_CMD=(
+            curl -v -X POST \
+            -H "Content-Type: text/plain" \
+            -H "X-Auth-Token: ${SIGNATURE}" \
+            -d "${REQUEST_BODY}" \
+            "${TARGET_URL}"
+        )
+        ;;
+
+    *)
+        echo "Error: Invalid mode '$MODE'." >&2
+        print_usage
+        ;;
+esac
+
+echo ""
+echo "Executing command:"
+# The next line prints the command in a copy-paste friendly format
+printf '%q ' "${CURL_CMD[@]}"
+echo ""
+echo ""
+echo "--- Server Response ---"
+
+# Execute the command
+"${CURL_CMD[@]}"
