@@ -21,7 +21,7 @@ func (s *server) handleWebhook(p processor.WebhookProcessor, recipients []config
 
 		s.notifier.Broadcast(r.Context(), recipients, message)
 
-		logger.Info().Int("recipients", len(recipients)).Msg("Webhook processed and broadcasted.")
+		logger.Info().Int("recipients", len(recipients)).Msg("webhook processed and broadcasted.")
 		w.WriteHeader(http.StatusOK)
 	}
 }
