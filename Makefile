@@ -3,7 +3,7 @@
 CMD_PATH := ./cmd
 BINARY_NAME := hookrelay
 
-CONFIG_FILE := config/example.yaml
+CONFIG_FILE := config/local.yaml
 
 # List of all Go files to track for changes
 GOFILES := $(shell find . -name '*.go' -not -path "./vendor/*")
@@ -16,11 +16,31 @@ GOFILES := $(shell find . -name '*.go' -not -path "./vendor/*")
 help:
 	@echo "Available commands:"
 	@echo ""
-	@echo "  make run                Build and run the main application with config/example.yaml."
-	@echo "  make build              Build the main application (gitrelay)."
+	@echo "  make configs            Сreates local and production configs by copying the example"
 	@echo ""
-	@echo "  make test               Run Go tests for the entire project."
-	@echo "  make clean              Remove built binaries."
+	@echo "  make run                Run the main application with local config"
+	@echo "  make build              Build the main application (gitrelay)"
+	@echo ""
+	@echo "  make test               Run Go tests for the entire project"
+	@echo "  make clean              Remove built binaries"
+
+
+# --- Config ---
+
+# Creating config files
+.PHONY: configs
+configs:
+	@mkdir -p config
+	@if [ -f config/local.yaml ]; then \
+		echo "config/local.yaml already exists"; \
+	else \
+		cp config/example.yaml config/local.yaml && echo "File config/local.yaml created"; \
+	fi
+	@if [ -f config/production.yaml ]; then \
+		echo "config/production.yaml already exists"; \
+	else \
+		cp config/example.yaml config/production.yaml && echo "File config/production.yaml created"; \
+	fi
 
 
 # --- Run ---

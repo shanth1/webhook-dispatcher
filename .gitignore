@@ -1,4 +1,6 @@
 .DS_Store
 
 build/
-config/config.yaml
+
+config/*
+!config/example.yaml

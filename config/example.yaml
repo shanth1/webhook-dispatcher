@@ -17,9 +17,9 @@ webhooks:
       - 'Dev Team (Telegram)'
 
   - name: 'custom-service-alerts'
-    path: '/webhook/alerts'
+    path: '/webhook/custom'
     type: 'custom'
-    secret: 'secret-for-custom-alerts'
+    secret: 'secret-for-custom-messages'
     recipients:
       - 'Admin (Email)'
       - 'On-call Engineer'

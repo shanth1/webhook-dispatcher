@@ -59,8 +59,8 @@ KANBOARD_PATH="/webhook/kanboard"
 KANBOARD_SECRET="your-kanboard-secret-token"
 
 # Custom Webhook Configuration
-CUSTOM_PATH="/webhook/alerts"
-CUSTOM_SECRET="secret-for-custom-alerts"
+CUSTOM_PATH="/webhook/custom"
+CUSTOM_SECRET="secret-for-custom-messages"
 
 # --- Helper Functions ---
 
@@ -77,7 +77,7 @@ print_usage() {
     echo "  $0 github push"
     echo "  $0 kanboard task.create"
     echo "  $0 github issues ./payload.json"
-    echo "  $0 custom 'This is a test alert'"
+    echo "  $0 custom 'This is a test message'"
     exit 1
 }
 
