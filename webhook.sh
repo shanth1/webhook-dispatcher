@@ -17,12 +17,19 @@
 #     - arg3 (optional): Path to a JSON file containing the payload.
 #                       If not provided, a default payload for the event is used.
 #
+#   - kanboard: Emulates a Kanboard webhook request.
+#     - arg2: The Kanboard event name (e.g., 'task.create', 'task.move').
+#     - arg3 (optional): Path to a JSON file containing the payload.
+#
 #   - custom: Sends a simple text-based webhook.
 #     - arg2: The raw text message to send as the request body.
 #
 # Examples:
 #   # Send a default GitHub 'push' event
 #   ./webhook.sh github push
+#
+#   # Send a Kanboard 'task.create' event
+#   ./webhook.sh kanboard task.create
 #
 #   # Send a GitHub 'issues' event using a custom payload from a file
 #   ./webhook.sh github issues ./payloads/my_issue.json
@@ -47,6 +54,10 @@ BASE_URL="http://localhost:8080"
 GITHUB_PATH="/webhook/github"
 GITHUB_SECRET="your-super-secret-github-string"
 
+# Kanboard Webhook Configuration
+KANBOARD_PATH="/webhook/kanboard"
+KANBOARD_SECRET="your-kanboard-secret-token"
+
 # Custom Webhook Configuration
 CUSTOM_PATH="/webhook/alerts"
 CUSTOM_SECRET="secret-for-custom-alerts"
@@ -58,11 +69,13 @@ print_usage() {
     echo "Usage: $0 <mode> <arg2> [arg3]"
     echo ""
     echo "Modes:"
-    echo "  github <event_name> [json_file]    - Emulate a GitHub webhook."
-    echo "  custom <'message'>                 - Send a custom plain text webhook."
+    echo "  github <event_name> [json_file]      - Emulate a GitHub webhook."
+    echo "  kanboard <event_name> [json_file]    - Emulate a Kanboard webhook."
+    echo "  custom <'message'>                   - Send a custom plain text webhook."
     echo ""
     echo "Examples:"
     echo "  $0 github push"
+    echo "  $0 kanboard task.create"
     echo "  $0 github issues ./payload.json"
     echo "  $0 custom 'This is a test alert'"
     exit 1
@@ -82,6 +95,28 @@ get_default_github_payload() {
             ;;
         *)
             echo "{\"message\":\"Default payload for event '$event_name' not found.\"}" | jq '.'
+            ;;
+    esac
+}
+
+# Function to provide default JSON payloads for Kanboard events
+get_default_kanboard_payload() {
+    local event_name=$1
+    case "$event_name" in
+        "task.create")
+            jq -n \
+              --arg event_name "$event_name" \
+              '{ "event_name": $event_name, "event_data": { "task": { "id": "101", "title": "Implement new API endpoint", "project_name": "My Awesome Project", "creator_username": "admin", "url": "http://kanboard.local/?controller=TaskViewController&action=show&task_id=101" } } }'
+            ;;
+        "task.move")
+            jq -n \
+              --arg event_name "$event_name" \
+              '{ "event_name": $event_name, "event_data": { "task": { "id": "102", "title": "Refactor database module", "project_name": "My Awesome Project", "column_name": "In Progress", "url": "http://kanboard.local/?controller=TaskViewController&action=show&task_id=102" } } }'
+            ;;
+        *)
+            jq -n \
+              --arg event_name "$event_name" \
+              '{ "event_name": $event_name, "event_data": { "message": "Default payload" } }'
             ;;
     esac
 }
@@ -149,6 +184,47 @@ case "$MODE" in
             -H "Content-Type: application/x-www-form-urlencoded" \
             -H "X-GitHub-Event: ${EVENT_NAME}" \
             -H "X-Hub-Signature-256: ${SIGNATURE}" \
+            -d "${REQUEST_BODY}" \
+            "${TARGET_URL}"
+        )
+        ;;
+
+    "kanboard")
+        EVENT_NAME=$1
+        JSON_FILE=$2
+        TARGET_URL="${BASE_URL}${KANBOARD_PATH}"
+
+        if [ -z "$EVENT_NAME" ]; then
+            echo "Error: Kanboard event name is required for 'kanboard' mode." >&2
+            print_usage
+        fi
+
+        echo "--- Kanboard Mode ---"
+        echo "Event: $EVENT_NAME"
+        echo "URL:   $TARGET_URL"
+
+        # Determine the JSON payload
+        if [ -n "$JSON_FILE" ]; then
+            if [ ! -f "$JSON_FILE" ]; then
+                echo "Error: JSON file not found at '$JSON_FILE'" >&2
+                exit 1
+            fi
+            echo "Payload: from file '$JSON_FILE'"
+            JSON_PAYLOAD=$(cat "$JSON_FILE")
+        else
+            echo "Payload: using default for '$EVENT_NAME'"
+            JSON_PAYLOAD=$(get_default_kanboard_payload "$EVENT_NAME")
+        fi
+
+        REQUEST_BODY="$JSON_PAYLOAD"
+        SIGNATURE="$KANBOARD_SECRET"
+        echo "Auth Token: $SIGNATURE"
+
+        # Construct and execute the curl command
+        CURL_CMD=(
+            curl -v -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Kanboard-Token: ${SIGNATURE}" \
             -d "${REQUEST_BODY}" \
             "${TARGET_URL}"
         )

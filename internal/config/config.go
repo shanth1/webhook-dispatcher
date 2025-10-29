@@ -12,8 +12,9 @@ const (
 type WebhookType string
 
 const (
-	WebhookTypeGitHub WebhookType = "github"
-	WebhookTypeCustom WebhookType = "custom"
+	WebhookTypeGitHub   WebhookType = "github"
+	WebhookTypeKanboard WebhookType = "kanboard"
+	WebhookTypeCustom   WebhookType = "custom"
 )
 
 type Recipient struct {

@@ -9,6 +9,13 @@ webhooks:
       - 'Dev Team (Telegram)'
       - 'Admin (Email)'
 
+  - name: 'kanboard-project-updates'
+    path: '/webhook/kanboard'
+    type: 'kanboard'
+    secret: 'your-kanboard-secret-token'
+    recipients:
+      - 'Dev Team (Telegram)'
+
   - name: 'custom-service-alerts'
     path: '/webhook/alerts'
     type: 'custom'

@@ -14,6 +14,7 @@ func (s *server) routes() http.Handler {
 	mux := http.NewServeMux()
 
 	githubProcessor := processor.NewGithubProcessor(s.templates)
+	kanboardProcessor := processor.NewKanboardProcessor(s.templates)
 	customProcessor := processor.NewCustomProcessor()
 
 	recipientMap := make(map[string]config.Recipient, len(s.cfg.Recipients))
@@ -29,6 +30,9 @@ func (s *server) routes() http.Handler {
 		case config.WebhookTypeGitHub:
 			v = &verifier.GithubVerifier{Secret: hookCfg.Secret}
 			p = githubProcessor
+		case config.WebhookTypeKanboard:
+			v = &verifier.KanboardVerifier{Secret: hookCfg.Secret}
+			p = kanboardProcessor
 		case config.WebhookTypeCustom:
 			v = &verifier.CustomVerifier{Secret: hookCfg.Secret}
 			p = customProcessor
