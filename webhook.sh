@@ -192,7 +192,7 @@ case "$MODE" in
     "kanboard")
         EVENT_NAME=$1
         JSON_FILE=$2
-        TARGET_URL="${BASE_URL}${KANBOARD_PATH}"
+        TARGET_URL="${BASE_URL}${KANBOARD_PATH}?token=${KANBOARD_SECRET}"
 
         if [ -z "$EVENT_NAME" ]; then
             echo "Error: Kanboard event name is required for 'kanboard' mode." >&2
@@ -202,6 +202,7 @@ case "$MODE" in
         echo "--- Kanboard Mode ---"
         echo "Event: $EVENT_NAME"
         echo "URL:   $TARGET_URL"
+        echo "Auth Method: URL query token"
 
         # Determine the JSON payload
         if [ -n "$JSON_FILE" ]; then
@@ -217,14 +218,11 @@ case "$MODE" in
         fi
 
         REQUEST_BODY="$JSON_PAYLOAD"
-        SIGNATURE="$KANBOARD_SECRET"
-        echo "Auth Token: $SIGNATURE"
 
         # Construct and execute the curl command
         CURL_CMD=(
             curl -v -X POST \
             -H "Content-Type: application/json" \
-            -H "X-Kanboard-Token: ${SIGNATURE}" \
             -d "${REQUEST_BODY}" \
             "${TARGET_URL}"
         )
@@ -243,7 +241,6 @@ case "$MODE" in
         echo "URL:     $TARGET_URL"
         echo "Message: '$MESSAGE'"
 
-        # The custom verifier uses a simple secret in the X-Auth-Token header
         REQUEST_BODY="$MESSAGE"
         SIGNATURE="$CUSTOM_SECRET"
         echo "Auth Header: $SIGNATURE"
