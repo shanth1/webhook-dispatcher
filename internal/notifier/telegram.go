@@ -30,8 +30,9 @@ func (s *TelegramSender) Send(ctx context.Context, chatID string, text string) e
 	apiURL := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", s.token)
 
 	payload := map[string]string{
-		"chat_id": chatID,
-		"text":    text,
+		"chat_id":    chatID,
+		"text":       text,
+		"parse_mode": "MarkdownV2",
 	}
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
