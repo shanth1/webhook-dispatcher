@@ -4,7 +4,7 @@ go 1.23.2
 
 require (
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/shanth1/gotools v0.9.1
+	github.com/shanth1/gotools v1.4.0
 )
 
 require (
