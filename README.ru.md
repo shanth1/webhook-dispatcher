@@ -71,6 +71,14 @@ make build
 # Адрес и порт, который будет слушать сервер.
 addr: ':8080'
 
+env: 'local'
+
+logger:
+  level: 'info'
+  app: 'my-app'
+  service: 'my-service'
+  udp_address: ''
+
 # Здесь определяются все входящие эндпоинты для вебхуков.
 webhooks:
   - name: 'github-repo-events'

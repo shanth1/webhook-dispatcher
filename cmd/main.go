@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/shanth1/gotools/conf"
+	"github.com/shanth1/gotools/consts"
 	"github.com/shanth1/gotools/ctx"
 	"github.com/shanth1/gotools/flags"
 	"github.com/shanth1/gotools/log"
@@ -21,8 +22,7 @@ func main() {
 	defer cancel()
 	defer shutdownCancel()
 
-	logger := log.New(log.WithService("telehook"), log.WithLevel(log.LevelInfo))
-	ctx = log.NewContext(ctx, logger)
+	logger := log.New()
 
 	flagCfg := &Flags{}
 	if err := flags.RegisterFromStruct(flagCfg); err != nil {
@@ -35,5 +35,16 @@ func main() {
 		logger.Fatal().Err(err).Msg("load config")
 	}
 
+	logger = logger.WithOptions(log.WithConfig(log.Config{
+		Level:        cfg.Logger.Level,
+		App:          cfg.Logger.App,
+		Service:      cfg.Logger.Service,
+		UDPAddress:   cfg.Logger.UDPAddres,
+		EnableCaller: cfg.Env != consts.EnvProd,
+		Console:      cfg.Env != consts.EnvProd,
+		JSONOutput:   cfg.Env == consts.EnvProd,
+	}))
+
+	ctx = log.NewContext(ctx, logger)
 	app.Run(ctx, shutdownCtx, cfg)
 }

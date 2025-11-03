@@ -1,5 +1,13 @@
 addr: ':8080'
 
+env: 'local'
+
+logger:
+  level: 'info'
+  app: 'my-app'
+  service: 'my-service'
+  udp_address: ''
+
 webhooks:
   - name: 'github-repo-events'
     path: '/webhook/github'

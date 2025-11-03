@@ -49,11 +49,20 @@ type EmailSettings struct {
 	From     string `mapstructure:"from"`
 }
 
+type Logger struct {
+	App       string `mapstructure:"app"`
+	Level     string `mapstructure:"level"`
+	Service   string `mapstructure:"service"`
+	UDPAddres string `mapstructure:"udp_address"`
+}
+
 type Config struct {
+	Env        string          `mapstructure:"env"`
 	Addr       string          `mapstructure:"addr"`
 	Webhooks   []WebhookConfig `mapstructure:"webhooks"`
 	Senders    []SenderConfig  `mapstructure:"senders"`
 	Recipients []Recipient     `mapstructure:"recipients"`
+	Logger     Logger          `mapstructure:"logger"`
 }
 
 func (sc *SenderConfig) DecodeSenderSettings(v interface{}) error {
