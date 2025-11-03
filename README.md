@@ -71,6 +71,14 @@ The application is configured using a YAML file (e.g., `config/production.yaml`)
 # The address and port the server will listen on.
 addr: ':8080'
 
+env: 'local'
+
+logger:
+  level: 'info'
+  app: 'my-app'
+  service: 'my-service'
+  udp_address: ''
+
 # Define all incoming webhook endpoints here.
 webhooks:
   - name: 'github-repo-events'
