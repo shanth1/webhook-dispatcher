@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/shanth1/gotools/log"
+	"github.com/shanth1/hookrelay/internal/adapters/inbound/custom"
 	"github.com/shanth1/hookrelay/internal/adapters/inbound/github"
 	"github.com/shanth1/hookrelay/internal/adapters/inbound/kanboard"
 	"github.com/shanth1/hookrelay/internal/adapters/outbound/email"
@@ -53,10 +54,7 @@ func initInboundHandlers(cfg *config.Config, logger log.Logger) (map[config.Webh
 				return nil, fmt.Errorf("failed to create kanboard processor: %w", err)
 			}
 		case config.WebhookTypeCustom:
-			handler, err = kanboard.NewHandler(webhookCfg.Secret)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create kanboard processor: %w", err)
-			}
+			handler = custom.NewHandler(webhookCfg.Secret)
 		default:
 			return nil, fmt.Errorf("unknown webhook handler type '%s' for '%s'", webhookCfg.Type, webhookCfg.Name)
 		}
