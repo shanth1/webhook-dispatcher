@@ -17,10 +17,10 @@ func NewRouter(api *API, logger log.Logger) http.Handler {
 	for _, hookCfg := range api.config.Webhooks {
 		handler := api.webhookHandlerFactory(hookCfg)
 
-		chain := middleware.WithMethod(http.MethodPost)(handler)
+		postOnlyHandler := middleware.WithMethod(http.MethodPost)(handler)
 
 		logger.Info().Str("path", hookCfg.Path).Str("type", string(hookCfg.Type)).Msg("registering webhook handler")
-		mux.Handle("POST "+hookCfg.Path, chain)
+		mux.Handle("POST "+hookCfg.Path, postOnlyHandler)
 	}
 
 	return middleware.Chain(
