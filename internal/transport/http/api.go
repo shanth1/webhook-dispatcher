@@ -7,21 +7,29 @@ import (
 	"net/http"
 
 	"github.com/shanth1/gotools/log"
+	"github.com/shanth1/hookrelay/internal/common"
 	"github.com/shanth1/hookrelay/internal/config"
 	"github.com/shanth1/hookrelay/internal/core/ports"
 )
 
 type API struct {
-	service ports.Service
-	logger  log.Logger
-	config  *config.Config
+	service       ports.Service
+	logger        log.Logger
+	config        *config.Config
+	webhookTypes  []config.WebhookType
+	notifierTypes []config.NotifierType
 }
 
 func NewAPI(service ports.Service, logger log.Logger, cfg *config.Config) *API {
+	webhookTypes := common.GetUniqueValues(cfg.Webhooks, func(c config.WebhookConfig) config.WebhookType { return c.Type })
+	notifierTypes := common.GetUniqueValues(cfg.Notifiers, func(c config.NotifierConfig) config.NotifierType { return c.Type })
+
 	return &API{
-		service: service,
-		logger:  logger,
-		config:  cfg,
+		service:       service,
+		logger:        logger,
+		config:        cfg,
+		webhookTypes:  webhookTypes,
+		notifierTypes: notifierTypes,
 	}
 }
 
@@ -36,24 +44,23 @@ func (a *API) handleRoot(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	a.handleListWebhooks(w, r)
+	w.WriteHeader(http.StatusOK)
 }
 
-func (a *API) handleListWebhooks(w http.ResponseWriter, r *http.Request) {
-	webhookTypes := make(map[string]struct{})
-	for _, hook := range a.config.Webhooks {
-		webhookTypes[string(hook.Type)] = struct{}{}
-	}
-
-	result := make([]string, 0, len(webhookTypes))
-	for t := range webhookTypes {
-		result = append(result, t)
-	}
-
+func (a *API) handleWebhookList(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(result); err != nil {
-		a.logger.Error().Err(err).Msg("failed to encode webhooks list to json")
+	if err := json.NewEncoder(w).Encode(a.webhookTypes); err != nil {
+		a.logger.Error().Err(err).Msg("failed to encode adapters list to json")
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
+}
+
+func (a *API) handleNotifierList(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(a.notifierTypes); err != nil {
+		a.logger.Error().Err(err).Msg("failed to encode adapters list to json")
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
 }
