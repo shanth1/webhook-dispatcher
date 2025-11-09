@@ -42,6 +42,7 @@ func (rt *Router) Handler() http.Handler {
 
 	mux.Handle("GET /health", http.HandlerFunc(rt.handleHealthCheck))
 	mux.Handle("GET /webhooks", http.HandlerFunc(rt.handleWebhookList))
+	mux.Handle("GET /notifiers", http.HandlerFunc(rt.handleNotifierList))
 	mux.Handle("GET /", http.HandlerFunc(rt.handleRoot))
 
 	return middleware.Chain(
