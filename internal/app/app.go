@@ -15,7 +15,6 @@ import (
 	"github.com/shanth1/hookrelay/internal/core/ports"
 	"github.com/shanth1/hookrelay/internal/service"
 	httptransport "github.com/shanth1/hookrelay/internal/transport/http"
-	"github.com/shanth1/hookrelay/internal/transport/http/router"
 )
 
 func Run(ctx, shutdownCtx context.Context, cfg *config.Config) {
@@ -99,14 +98,16 @@ func runHTTPServer(
 	service ports.Service,
 	logger log.Logger,
 ) {
-	router := router.New(cfg, service, logger)
-	httpHandler := router.Handler()
+	api := httptransport.NewAPI(service, logger, cfg)
+
+	httpHandler := httptransport.NewRouter(api, logger)
+
 	server := httptransport.NewServer(cfg.Addr, httpHandler)
 
 	go func() {
 		logger.Info().Msgf("starting HTTP server on %s", cfg.Addr)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Error().Err(err).Msg("http server failed")
+			logger.Fatal().Err(err).Msg("http server failed")
 		}
 	}()
 
@@ -115,5 +116,4 @@ func runHTTPServer(
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		logger.Error().Err(err).Msg("http server graceful shutdown failed")
 	}
-
 }
