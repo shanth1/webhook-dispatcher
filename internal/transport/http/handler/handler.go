@@ -1,4 +1,4 @@
-package httptransport
+package handler
 
 import (
 	"bytes"
@@ -11,23 +11,20 @@ import (
 )
 
 type webhookHandler struct {
-	service     ports.WebhookService
-	adapter     InboundAdapter
-	webhookType config.WebhookType
-	recipients  []config.Recipient
+	service    ports.Service
+	webhookCfg config.WebhookConfig
+	recipients []config.Recipient
 }
 
 func NewWebhookHandler(
-	service ports.WebhookService,
-	adapter InboundAdapter,
-	webhookType config.WebhookType,
+	service ports.Service,
+	webhookCfg config.WebhookConfig,
 	recipients []config.Recipient,
 ) http.Handler {
 	return &webhookHandler{
-		service:     service,
-		adapter:     adapter,
-		webhookType: webhookType,
-		recipients:  recipients,
+		service:    service,
+		webhookCfg: webhookCfg,
+		recipients: recipients,
 	}
 }
 
@@ -42,27 +39,15 @@ func (h *webhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
-	verificationData := VerificationData{
-		Body:        body,
-		Headers:     extractHeaders(r.Header),
-		QueryParams: extractQueryParams(r.URL.Query()),
+	inboundReq := ports.WebhookRequest{
+		Payload: body,
+		Headers: extractHeaders(r.Header),
+		Params:  extractQueryParams(r.URL.Query()),
 	}
 
-	if ok := h.adapter.Verify(verificationData); !ok {
-		logger.Warn().Msg("invalid webhook signature or token")
-		http.Error(w, "Invalid signature or token", http.StatusForbidden)
-		return
-	}
-
-	coreRequest := ports.WebhookRequest{
-		WebhookType: h.webhookType,
-		Payload:     body,
-		Headers:     verificationData.Headers,
-	}
-
-	if err := h.service.ProcessWebhook(r.Context(), coreRequest, h.recipients); err != nil {
-		logger.Error().Err(err).Msg("failed to process webhook")
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if err := h.service.ProcessWebhook(r.Context(), h.webhookCfg.Name, inboundReq, h.recipients); err != nil {
+		logger.Warn().Err(err).Str("name", string(h.webhookCfg.Name)).Msg("failed to process webhook")
+		http.Error(w, "Webhook processing failed", http.StatusBadRequest)
 		return
 	}
 

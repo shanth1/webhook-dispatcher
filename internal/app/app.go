@@ -6,14 +6,13 @@ import (
 	"net/http"
 
 	"github.com/shanth1/gotools/log"
-	"github.com/shanth1/hookrelay/internal/adapters/inbound/custom"
 	"github.com/shanth1/hookrelay/internal/adapters/inbound/github"
 	"github.com/shanth1/hookrelay/internal/adapters/inbound/kanboard"
 	"github.com/shanth1/hookrelay/internal/adapters/outbound/email"
 	"github.com/shanth1/hookrelay/internal/adapters/outbound/telegram"
 	"github.com/shanth1/hookrelay/internal/config"
 	"github.com/shanth1/hookrelay/internal/core/ports"
-	"github.com/shanth1/hookrelay/internal/service/webhook"
+	"github.com/shanth1/hookrelay/internal/service"
 	httptransport "github.com/shanth1/hookrelay/internal/transport/http"
 	"github.com/shanth1/hookrelay/internal/transport/http/router"
 )
@@ -21,30 +20,88 @@ import (
 func Run(ctx, shutdownCtx context.Context, cfg *config.Config) {
 	logger := log.FromContext(ctx)
 
+	handlers, err := initInboundHandlers(cfg, logger)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("failed to initialize inbound processors")
+	}
+
 	notifiers, err := initOutboundAdapters(cfg, logger)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("failed to initialize outbound adapters")
 	}
 
-	processors, err := initInboundProcessors()
-	if err != nil {
-		logger.Fatal().Err(err).Msg("failed to initialize inbound processors")
+	webhookService := service.New(handlers, notifiers, logger)
+
+	runHTTPServer(ctx, shutdownCtx, cfg, webhookService, logger)
+	logger.Info().Msg("application shutdown complete")
+}
+
+func initInboundHandlers(cfg *config.Config, logger log.Logger) (map[config.WebhookName]ports.WebhookHandler, error) {
+	handlers := make(map[config.WebhookName]ports.WebhookHandler)
+	for _, webhookCfg := range cfg.Webhooks {
+		var handler ports.WebhookHandler
+		var err error
+		switch webhookCfg.Type {
+		case config.WebhookTypeGitHub:
+			handler, err = github.NewHandler(webhookCfg.Secret)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create github processor: %w", err)
+			}
+		case config.WebhookTypeKanboard:
+			handler, err = kanboard.NewHandler(webhookCfg.Secret)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create kanboard processor: %w", err)
+			}
+		case config.WebhookTypeCustom:
+			handler, err = kanboard.NewHandler(webhookCfg.Secret)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create kanboard processor: %w", err)
+			}
+		default:
+			return nil, fmt.Errorf("unknown webhook handler type '%s' for '%s'", webhookCfg.Type, webhookCfg.Name)
+		}
+		handlers[config.WebhookName(webhookCfg.Name)] = handler
+		logger.Info().Str("name", string(webhookCfg.Name)).Str("type", string(webhookCfg.Type)).Msg("registered webhook handler")
 	}
 
-	webhookService := webhook.NewService(notifiers, processors, logger)
+	return handlers, nil
 
-	runHTTPServer(ctx, shutdownCtx, cfg, webhookService, processors, logger)
-	logger.Info().Msg("application shutdown complete")
+}
+
+func initOutboundAdapters(cfg *config.Config, logger log.Logger) (map[config.NotifierName]ports.Notifier, error) {
+	notifiers := make(map[config.NotifierName]ports.Notifier)
+	for _, notifierCfg := range cfg.Notifiers {
+		var notifier ports.Notifier
+		var err error
+		switch notifierCfg.Type {
+		case config.NotifierTypeTelegram:
+			var settings config.TelegramSettings
+			if err = notifierCfg.DecodeSettings(&settings); err != nil {
+				return nil, fmt.Errorf("failed to decode telegram settings for '%s': %w", notifierCfg.Name, err)
+			}
+			notifier = telegram.NewSender(settings)
+		case config.NotifierTypeEmail:
+			var settings config.EmailSettings
+			if err = notifierCfg.DecodeSettings(&settings); err != nil {
+				return nil, fmt.Errorf("failed to decode email settings for '%s': %w", notifierCfg.Name, err)
+			}
+			notifier = email.NewSender(settings)
+		default:
+			return nil, fmt.Errorf("unknown sender type '%s' for '%s'", notifierCfg.Type, notifierCfg.Name)
+		}
+		notifiers[notifierCfg.Name] = notifier
+		logger.Info().Str("name", string(notifierCfg.Name)).Str("type", string(notifierCfg.Type)).Msg("registered notifier")
+	}
+	return notifiers, nil
 }
 
 func runHTTPServer(
 	ctx, shutdownCtx context.Context,
 	cfg *config.Config,
-	service ports.WebhookService,
-	processors map[config.WebhookType]webhook.Processor,
+	service ports.Service,
 	logger log.Logger,
 ) {
-	router := router.New(cfg, service, processors, logger)
+	router := router.New(cfg, service, logger)
 	httpHandler := router.Handler()
 	server := httptransport.NewServer(cfg.Addr, httpHandler)
 
@@ -60,49 +117,5 @@ func runHTTPServer(
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		logger.Error().Err(err).Msg("http server graceful shutdown failed")
 	}
-}
 
-func initOutboundAdapters(cfg *config.Config, logger log.Logger) (map[string]ports.Notifier, error) {
-	notifiers := make(map[string]ports.Notifier)
-	for _, senderCfg := range cfg.Senders {
-		var s ports.Notifier
-		var err error
-		switch senderCfg.Type {
-		case config.SenderTypeTelegram:
-			var settings config.TelegramSettings
-			if err = senderCfg.DecodeSenderSettings(&settings); err != nil {
-				return nil, fmt.Errorf("failed to decode telegram settings for '%s': %w", senderCfg.Name, err)
-			}
-			s = telegram.NewSender(settings)
-		case config.SenderTypeEmail:
-			var settings config.EmailSettings
-			if err = senderCfg.DecodeSenderSettings(&settings); err != nil {
-				return nil, fmt.Errorf("failed to decode email settings for '%s': %w", senderCfg.Name, err)
-			}
-			s = email.NewSender(settings)
-		default:
-			return nil, fmt.Errorf("unknown sender type '%s' for '%s'", senderCfg.Type, senderCfg.Name)
-		}
-		notifiers[senderCfg.Name] = s
-		logger.Info().Str("name", senderCfg.Name).Str("type", string(senderCfg.Type)).Msg("registered notifier")
-	}
-	return notifiers, nil
-}
-
-func initInboundProcessors() (map[config.WebhookType]webhook.Processor, error) {
-	githubProcessor, err := github.NewProcessor()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create github processor: %w", err)
-	}
-	kanboardProcessor, err := kanboard.NewProcessor()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create kanboard processor: %w", err)
-	}
-	customProcessor := custom.NewProcessor()
-
-	return map[config.WebhookType]webhook.Processor{
-		config.WebhookTypeGitHub:   githubProcessor,
-		config.WebhookTypeKanboard: kanboardProcessor,
-		config.WebhookTypeCustom:   customProcessor,
-	}, nil
 }

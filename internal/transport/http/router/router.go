@@ -4,30 +4,34 @@ import (
 	"net/http"
 
 	"github.com/shanth1/gotools/log"
+	"github.com/shanth1/hookrelay/internal/common"
 	"github.com/shanth1/hookrelay/internal/config"
 	"github.com/shanth1/hookrelay/internal/core/ports"
-	"github.com/shanth1/hookrelay/internal/service/webhook"
 	"github.com/shanth1/hookrelay/internal/transport/http/middleware"
 )
 
 type Router struct {
-	logger     log.Logger
-	cfg        *config.Config
-	service    ports.WebhookService
-	processors map[config.WebhookType]webhook.Processor
+	cfg           *config.Config
+	logger        log.Logger
+	service       ports.Service
+	webhookTypes  []config.WebhookType
+	notifierTypes []config.NotifierType
 }
 
 func New(
 	cfg *config.Config,
-	service ports.WebhookService,
-	processors map[config.WebhookType]webhook.Processor,
+	service ports.Service,
 	logger log.Logger,
 ) *Router {
+	webhookTypes := common.GetUniqueValues(cfg.Webhooks, func(c config.WebhookConfig) config.WebhookType { return c.Type })
+	notifierTypes := common.GetUniqueValues(cfg.Notifiers, func(c config.NotifierConfig) config.NotifierType { return c.Type })
+
 	return &Router{
-		cfg:        cfg,
-		service:    service,
-		processors: processors,
-		logger:     logger,
+		cfg:           cfg,
+		service:       service,
+		logger:        logger,
+		webhookTypes:  webhookTypes,
+		notifierTypes: notifierTypes,
 	}
 }
 
@@ -37,7 +41,7 @@ func (rt *Router) Handler() http.Handler {
 	rt.registerWebhookRoutes(mux)
 
 	mux.Handle("GET /health", http.HandlerFunc(rt.handleHealthCheck))
-	mux.Handle("GET /adapters", http.HandlerFunc(rt.handleAdaptersList))
+	mux.Handle("GET /webhooks", http.HandlerFunc(rt.handleWebhookList))
 	mux.Handle("GET /", http.HandlerFunc(rt.handleRoot))
 
 	return middleware.Chain(
