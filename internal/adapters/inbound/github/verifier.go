@@ -9,7 +9,7 @@ import (
 )
 
 func (h *Handler) verify(req ports.WebhookRequest) bool {
-	signature := req.Headers["x-hub-signature-256"]
+	signature := req.GetHeader("X-Hub-Signature-256")
 	if signature == "" {
 		return false
 	}

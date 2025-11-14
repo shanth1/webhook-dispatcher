@@ -10,7 +10,7 @@ import (
 
 func parsePayload(req ports.WebhookRequest) (payload map[string]interface{}, eventName string, err error) {
 	payloadJSON := ""
-	contentType := req.Headers["content-type"]
+	contentType := req.GetHeader("Content-Type")
 
 	if contentType == "application/x-www-form-urlencoded" {
 		form, err := url.ParseQuery(string(req.Payload))
@@ -26,7 +26,7 @@ func parsePayload(req ports.WebhookRequest) (payload map[string]interface{}, eve
 		return nil, "", fmt.Errorf("payload is empty or content type is unsupported")
 	}
 
-	eventName = req.Headers["x-github-event"]
+	eventName = req.GetHeader("X-Github-Event")
 	if err := json.Unmarshal([]byte(payloadJSON), &payload); err != nil {
 		return nil, "", fmt.Errorf("error parsing JSON payload: %w", err)
 	}
