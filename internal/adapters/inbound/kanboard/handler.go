@@ -18,18 +18,23 @@ type KanboardPayload struct {
 }
 
 type Handler struct {
-	templates *template.Template
-	secret    string
+	secret                  string
+	templates               *template.Template
+	disableUnknownTemplates bool
 }
 
 var _ ports.WebhookHandler = (*Handler)(nil)
 
-func NewHandler(secret string) (ports.WebhookHandler, error) {
+func NewHandler(secret string, disableUnknownTemplates bool) (ports.WebhookHandler, error) {
 	tmpls, err := parseTemplates()
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse kanboard templates: %w", err)
 	}
-	return &Handler{templates: tmpls}, nil
+	return &Handler{
+		secret:                  secret,
+		templates:               tmpls,
+		disableUnknownTemplates: disableUnknownTemplates,
+	}, nil
 }
 
 func (h *Handler) Handle(ctx context.Context, req ports.WebhookRequest) (*domain.Notification, error) {
@@ -54,7 +59,13 @@ func (h *Handler) Handle(ctx context.Context, req ports.WebhookRequest) (*domain
 
 	templateName := common.GetTemplatePath(payload.EventName)
 	if h.templates.Lookup(templateName) == nil {
-		templateName = common.GetTemplatePath("default")
+		templateExists := h.templates.Lookup(templateName) != nil
+		if !templateExists {
+			if h.disableUnknownTemplates {
+				return nil, nil
+			}
+			templateName = common.GetTemplatePath("default")
+		}
 	}
 
 	var message bytes.Buffer

@@ -20,12 +20,13 @@ const (
 )
 
 type Config struct {
-	Env        string           `mapstructure:"env"`
-	Addr       string           `mapstructure:"addr"`
-	Webhooks   []WebhookConfig  `mapstructure:"webhooks"`
-	Notifiers  []NotifierConfig `mapstructure:"notifiers"`
-	Recipients []Recipient      `mapstructure:"recipients"`
-	Logger     Logger           `mapstructure:"logger"`
+	Env                     string           `mapstructure:"env"`
+	Addr                    string           `mapstructure:"addr"`
+	Webhooks                []WebhookConfig  `mapstructure:"webhooks"`
+	Notifiers               []NotifierConfig `mapstructure:"notifiers"`
+	Recipients              []Recipient      `mapstructure:"recipients"`
+	Logger                  Logger           `mapstructure:"logger"`
+	DisableUnknownTemplates bool             `mapstructure:"disable_unknown_templates"` // TODO: moved to webhookConfig
 }
 
 type Logger struct {

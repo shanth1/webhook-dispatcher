@@ -2,6 +2,8 @@ addr: ':8080'
 
 env: 'local'
 
+disable_unknown_templates: false
+
 logger:
   level: 'info'
   app: 'my-app'
