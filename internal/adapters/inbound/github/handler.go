@@ -38,7 +38,7 @@ func (h *Handler) Handle(ctx context.Context, req ports.WebhookRequest) (*domain
 
 	payload, eventName, err := parsePayload(req)
 	if err != nil {
-		return nil, common.ErrInvalidSignature
+		return nil, fmt.Errorf("parse payload: %w", err)
 	}
 
 	templateName := common.GetTemplatePath(eventName)
