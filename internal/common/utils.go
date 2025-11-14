@@ -2,7 +2,6 @@ package common
 
 import (
 	"fmt"
-	"path"
 )
 
 func GetUniqueValues[S ~[]E, E any, T comparable](sourceSlice S, getValue func(E) T) []T {
@@ -19,5 +18,5 @@ func GetUniqueValues[S ~[]E, E any, T comparable](sourceSlice S, getValue func(E
 }
 
 func GetTemplatePath(name string) string {
-	return path.Join("templates", fmt.Sprintf("%s.tmpl", name))
+	return fmt.Sprintf("%s.tmpl", name)
 }
