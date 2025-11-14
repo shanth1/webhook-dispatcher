@@ -96,7 +96,7 @@ func (a *API) webhookHandlerFactory(webhookCfg config.WebhookConfig) http.Handle
 		}
 
 		if err := a.service.ProcessWebhook(r.Context(), webhookCfg.Name, inboundReq, resolvedRecipients); err != nil {
-			logger.Warn().Err(err).Str("webhook_name", string(webhookCfg.Name)).Msg("failed to process webhook")
+			logger.Error().Err(err).Str("webhook_name", string(webhookCfg.Name)).Msg("failed to process webhook")
 			http.Error(w, "Webhook processing failed: "+err.Error(), http.StatusBadRequest)
 			return
 		}
