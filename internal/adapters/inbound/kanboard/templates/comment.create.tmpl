@@ -1,7 +1,9 @@
-💬 New Comment in {{ .EventData.task.project_name }}
+💬 New Comment
 
-Task: {{ .EventData.task.title }}
-By: {{ .EventData.comment.username }}
-"{{ .EventData.comment.comment }}"
+*Project:* `{{ .EventData.task.project_name }}`
+*Task:* [{{ .EventData.task.title }}]({{ .EventData.task.url }})
+*Column:* `{{ .EventData.task.column_title }}`
+*Assignee:* `{{ .EventData.task.assignee_username }}`
 
-Link: [View Task]({{ .EventData.task.url }})
+*Author:* **{{ .EventData.comment.username }}**
+> {{ .EventData.comment.comment }}

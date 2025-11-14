@@ -1,0 +1,8 @@
+➕ *Subtask added*
+
+*Project:* `{{ .EventData.task.project_name }}`
+*Parent task:* [{{ .EventData.task.title }}]({{ .EventData.task.url }})
+
+*Subtask name:* **{{ .EventData.subtask.title }}**
+*Status:* `{{ .EventData.subtask.status_name }}`
+*Assignee:* `{{ .EventData.subtask.assignee_username | default "не назначен" }}`

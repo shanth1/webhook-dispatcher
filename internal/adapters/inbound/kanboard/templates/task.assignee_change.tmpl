@@ -1,0 +1,6 @@
+👤 *Task assignee changed*
+
+*Project:* `{{ .EventData.task.project_name }}`
+*Task:* [{{ .EventData.task.title }}]({{ .EventData.task.url }})
+
+*New assignee:* **{{ .EventData.task.assignee_username | default "unassigned" }}**
