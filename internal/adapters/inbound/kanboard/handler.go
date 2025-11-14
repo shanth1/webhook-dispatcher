@@ -14,24 +14,36 @@ import (
 
 type KanboardPayload struct {
 	EventName string                 `json:"event_name"`
+	URL       string                 `json:"url"`
 	EventData map[string]interface{} `json:"event_data"`
 }
 
 type Handler struct {
 	secret                  string
+	baseURL                 string
 	templates               *template.Template
 	disableUnknownTemplates bool
 }
 
 var _ ports.WebhookHandler = (*Handler)(nil)
 
-func NewHandler(secret string, disableUnknownTemplates bool) (ports.WebhookHandler, error) {
+func NewHandler(secret, baseURL string, disableUnknownTemplates bool) (ports.WebhookHandler, error) {
+	if secret == "" {
+		return nil, fmt.Errorf("empty 'secret' value")
+	}
+
+	// TODO: added url validation
+	if baseURL == "" {
+		return nil, fmt.Errorf("empty 'base_url' value")
+	}
+
 	tmpls, err := parseTemplates()
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse kanboard templates: %w", err)
 	}
 	return &Handler{
 		secret:                  secret,
+		baseURL:                 baseURL,
 		templates:               tmpls,
 		disableUnknownTemplates: disableUnknownTemplates,
 	}, nil
@@ -56,6 +68,17 @@ func (h *Handler) Handle(ctx context.Context, req ports.WebhookRequest) (*domain
 	}
 
 	payload.EventData["eventName"] = payload.EventName
+
+	// TODO: refactor
+	if taskData, ok := payload.EventData["task"].(map[string]interface{}); ok {
+		taskID, tid_ok := taskData["id"].(string)
+		projectID, pid_ok := taskData["project_id"].(string)
+
+		if tid_ok && pid_ok {
+			taskURL := fmt.Sprintf("%s/?controller=TaskViewController&action=show&task_id=%s&project_id=%s", h.baseURL, taskID, projectID)
+			taskData["url"] = taskURL
+		}
+	}
 
 	templateName := common.GetTemplatePath(payload.EventName)
 	if h.templates.Lookup(templateName) == nil {

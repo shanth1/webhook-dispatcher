@@ -48,7 +48,7 @@ func initInboundHandlers(cfg *config.Config, logger log.Logger) (map[config.Webh
 				return nil, fmt.Errorf("failed to create github processor: %w", err)
 			}
 		case config.WebhookTypeKanboard:
-			handler, err = kanboard.NewHandler(webhookCfg.Secret, cfg.DisableUnknownTemplates)
+			handler, err = kanboard.NewHandler(webhookCfg.Secret, webhookCfg.BaseURL, cfg.DisableUnknownTemplates)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create kanboard processor: %w", err)
 			}

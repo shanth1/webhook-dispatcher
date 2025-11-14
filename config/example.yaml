@@ -23,6 +23,7 @@ webhooks:
     path: '/webhook/kanboard'
     type: 'kanboard'
     secret: 'your-kanboard-secret-token'
+    base_url: 'https://kanboard.example.com'
     recipients:
       - 'Dev Team (Telegram)'
 

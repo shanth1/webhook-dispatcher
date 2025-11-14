@@ -51,6 +51,7 @@ type WebhookConfig struct {
 	Path       string      `mapstructure:"path"`
 	Type       WebhookType `mapstructure:"type"`
 	Secret     string      `mapstructure:"secret"`
+	BaseURL    string      `mapstructure:"base_url"`
 	Recipients []string    `mapstructure:"recipients"`
 }
 
