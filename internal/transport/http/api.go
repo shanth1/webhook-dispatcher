@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/shanth1/gotools/log"
 	"github.com/shanth1/hookrelay/internal/common"
@@ -110,7 +111,7 @@ func extractHeaders(h http.Header) map[string]string {
 	headers := make(map[string]string)
 	for key, values := range h {
 		if len(values) > 0 {
-			headers[key] = values[0]
+			headers[strings.ToLower(key)] = values[0]
 		}
 	}
 	return headers

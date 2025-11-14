@@ -34,7 +34,7 @@ func (h *Handler) Handle(ctx context.Context, req ports.WebhookRequest) (*domain
 }
 
 func (h *Handler) verify(req ports.WebhookRequest) bool {
-	providerSecret := req.Headers["X-Auth-Token"]
+	providerSecret := req.Headers["x-auth-token"]
 
 	return providerSecret != "" && providerSecret == h.secret
 }

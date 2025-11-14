@@ -54,8 +54,8 @@ func (h *Handler) Handle(ctx context.Context, req ports.WebhookRequest) (*domain
 		return nil, common.ErrInvalidSignature
 	}
 
-	if req.Headers["Content-Type"] != "application/json" {
-		return nil, fmt.Errorf("unsupported content type: %s", req.Headers["Content-Type"])
+	if req.Headers["content-type"] != "application/json" {
+		return nil, fmt.Errorf("unsupported content type: %s", req.Headers["content-type"])
 	}
 
 	var payload KanboardPayload
