@@ -5,4 +5,4 @@
 
 *Subtask name:* **{{ .EventData.subtask.title }}**
 *Status:* `{{ .EventData.subtask.status_name }}`
-*Assignee:* `{{ .EventData.subtask.assignee_username | default "не назначен" }}`
+*Assignee:* `{{ or .EventData.subtask.assignee_username "unassigned" }}`
