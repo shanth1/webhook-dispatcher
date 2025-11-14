@@ -35,7 +35,7 @@ webhooks:
       - 'Admin (Email)'
       - 'On-call Engineer'
 
-senders:
+notifiers:
   - name: 'project-telegram-bot'
     type: 'telegram'
     settings:
@@ -52,13 +52,13 @@ senders:
 
 recipients:
   - name: 'Dev Team (Telegram)'
-    sender: 'project-telegram-bot'
     target: '123456789'
+    notifier: 'project-telegram-bot'
 
   - name: 'Admin (Email)'
-    sender: 'smtp-notifications'
     target: 'admin@example.com'
+    notifier: 'smtp-notifications'
 
   - name: 'On-call Engineer'
-    sender: 'project-telegram-bot'
     target: '987654321'
+    notifier: 'project-telegram-bot'
