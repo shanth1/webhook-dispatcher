@@ -1,4 +1,5 @@
 🔔 *Event on Kanboard: `{{ .EventName }}`*
+
 {{ if .EventData.task }}
 *Project:* `{{ .EventData.task.project_name }}`
 *Task:* [{{ .EventData.task.title }}]({{ .EventData.task.url }})
