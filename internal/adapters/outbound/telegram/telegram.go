@@ -31,7 +31,9 @@ func NewSender(cfg config.TelegramSettings) *Sender {
 }
 
 func (s *Sender) Send(ctx context.Context, chatID string, notification domain.Notification) error {
-	err := s.trySend(ctx, chatID, notification.Body, "MarkdownV2")
+	escapedText := escapeMarkdownV2Selective(notification.Body)
+
+	err := s.trySend(ctx, chatID, escapedText, "MarkdownV2")
 	if err == nil {
 		return nil
 	}
@@ -78,4 +80,27 @@ func (s *Sender) trySend(ctx context.Context, chatID, text, parseMode string) er
 	}
 
 	return nil
+}
+
+// escapeMarkdownV2Selective selectively escapes characters for Telegram's MarkdownV2 parser.
+// It preserves common formatting characters like *, _, `, [ and ] to allow for intentional formatting.
+func escapeMarkdownV2Selective(text string) string {
+	// Characters that Telegram requires to be escaped in MarkdownV2 mode.
+	// We are intentionally NOT escaping *, _, `, [ and ] because we assume they are used for formatting.
+	// The parentheses ( and ) are also not escaped here to allow for [link](url) syntax.
+	// If you have literal parentheses to send, they must be escaped.
+	replacer := strings.NewReplacer(
+		"~", "\\~",
+		">", "\\>",
+		"#", "\\#",
+		"+", "\\+",
+		"-", "\\-",
+		"=", "\\=",
+		"|", "\\|",
+		"{", "\\{",
+		"}", "\\}",
+		".", "\\.",
+		"!", "\\!",
+	)
+	return replacer.Replace(text)
 }
