@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"html/template"
+	"text/template"
 
 	"github.com/shanth1/hookrelay/internal/common"
 	"github.com/shanth1/hookrelay/internal/core/domain"
@@ -67,15 +67,18 @@ func (h *Handler) Handle(ctx context.Context, req ports.WebhookRequest) (*domain
 		return nil, fmt.Errorf("kanboard event_name is missing from payload")
 	}
 
-	payload.EventData["eventName"] = payload.EventName
-
 	// TODO: refactor
 	if taskData, ok := payload.EventData["task"].(map[string]interface{}); ok {
-		taskID, tid_ok := taskData["id"].(string)
-		projectID, pid_ok := taskData["project_id"].(string)
+		taskIDFloat, tid_ok := taskData["id"].(float64)
+		projectIDFloat, pid_ok := taskData["project_id"].(float64)
 
 		if tid_ok && pid_ok {
-			taskURL := fmt.Sprintf("%s/?controller=TaskViewController&action=show&task_id=%s&project_id=%s", h.baseURL, taskID, projectID)
+			taskURL := fmt.Sprintf(
+				"%s/?controller=TaskViewController&action=show&task_id=%d&project_id=%d",
+				h.baseURL,
+				int64(taskIDFloat),
+				int64(projectIDFloat),
+			)
 			taskData["url"] = taskURL
 		}
 	}
@@ -92,7 +95,7 @@ func (h *Handler) Handle(ctx context.Context, req ports.WebhookRequest) (*domain
 	}
 
 	var message bytes.Buffer
-	if err := h.templates.ExecuteTemplate(&message, templateName, payload.EventData); err != nil {
+	if err := h.templates.ExecuteTemplate(&message, templateName, payload); err != nil {
 		return nil, fmt.Errorf("error executing kanboard template '%s': %w", templateName, err)
 	}
 
