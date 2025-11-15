@@ -1,12 +1,13 @@
-✅ New Task Created
+✅ *New Task Created*
 
-*Project:* `{{ .EventData.task.project_name }}`
-*Task:* [{{ .EventData.task.title }}]({{ .EventData.task.url }})
+Project: `{{ .EventData.task.project_name }}`
+Task: [{{ .EventData.task.title }}]({{ .EventData.task.url }})
 
-*Author:* `{{ .EventData.task.creator_username }}`
-*Assignee:* `{{ .EventData.task.assignee_username }}`
-*Column:* `{{ .EventData.task.column_title }}`
+Author: `{{ .EventData.task.creator_username }}`
+Assignee: `{{ .EventData.task.assignee_username }}`
+Column: `{{ .EventData.task.column_title }}`
+
 {{ if .EventData.task.description }}
-*Description:*
+Description:
 > {{ .EventData.task.description }}
 {{ end }}

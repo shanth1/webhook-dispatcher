@@ -1,8 +1,8 @@
 ➕ *Subtask added*
 
-*Project:* `{{ .EventData.task.project_name }}`
-*Parent task:* [{{ .EventData.task.title }}]({{ .EventData.task.url }})
+Project:* `{{ .EventData.task.project_name }}`
+Parent task:* [{{ .EventData.task.title }}]({{ .EventData.task.url }})
 
-*Subtask name:* **{{ .EventData.subtask.title }}**
-*Status:* `{{ .EventData.subtask.status_name }}`
-*Assignee:* `{{ or .EventData.subtask.assignee_username "unassigned" }}`
+Subtask name: **{{ .EventData.subtask.title }}**
+Status: `{{ .EventData.subtask.status_name }}`
+Assignee: `{{ or .EventData.subtask.assignee_username "unassigned" }}`

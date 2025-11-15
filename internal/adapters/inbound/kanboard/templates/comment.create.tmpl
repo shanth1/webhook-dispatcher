@@ -1,9 +1,9 @@
-💬 New Comment
+💬 *New Comment*
 
-*Project:* `{{ .EventData.task.project_name }}`
-*Task:* [{{ .EventData.task.title }}]({{ .EventData.task.url }})
-*Column:* `{{ .EventData.task.column_title }}`
-*Assignee:* `{{ .EventData.task.assignee_username }}`
+Project: `{{ .EventData.task.project_name }}`
+Task: [{{ .EventData.task.title }}]({{ .EventData.task.url }})
+Column: `{{ .EventData.task.column_title }}`
+Assignee: `{{ .EventData.task.assignee_username }}`
 
-*Author:* **{{ .EventData.comment.username }}**
+Author: **{{ .EventData.comment.username }}**
 > {{ .EventData.comment.comment }}

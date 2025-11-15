@@ -1,11 +1,11 @@
 📝 *Task updated*
 
-*Project:* `{{ .EventData.task.project_name }}`
-*Task:* [{{ .EventData.task.title }}]({{ .EventData.task.url }})
+Project: `{{ .EventData.task.project_name }}`
+Task: [{{ .EventData.task.title }}]({{ .EventData.task.url }})
 
 *Changes:*
 {{- range $field, $value := .EventData.changes }}
-  • *{{ $field }}:* `{{ $value }}`
+  • {{ $field }}: `{{ $value }}`
 {{- else }}
   • No information about changes
 {{- end }}

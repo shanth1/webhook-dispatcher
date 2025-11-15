@@ -1,10 +1,10 @@
 🔔 *Event on Kanboard: `{{ .EventName }}`*
 
 {{ if .EventData.task }}
-*Project:* `{{ .EventData.task.project_name }}`
-*Task:* [{{ .EventData.task.title }}]({{ .EventData.task.url }})
+Project: `{{ .EventData.task.project_name }}`
+Task: [{{ .EventData.task.title }}]({{ .EventData.task.url }})
 {{ else if .EventData.project_name }}
-*Project:* `{{ .EventData.project_name }}`
+Project: `{{ .EventData.project_name }}`
 {{ end }}
 
 _This event is handled by the default template. For more detailed information, create a template `kanboard/{{ .EventName }}.tmpl`_
