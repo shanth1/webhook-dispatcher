@@ -8,39 +8,61 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/shanth1/gotools/log"
 	"github.com/shanth1/hookrelay/internal/config"
 	"github.com/shanth1/hookrelay/internal/core/domain"
 	"github.com/shanth1/hookrelay/internal/core/ports"
+	"github.com/shanth1/hookrelay/internal/templates"
 )
 
 var _ ports.Notifier = (*Sender)(nil)
 
 type Sender struct {
-	client *http.Client
-	token  string
+	client    *http.Client
+	token     string
+	templates *template.Template
 }
 
-func NewSender(cfg config.TelegramSettings) *Sender {
-	return &Sender{
-		client: &http.Client{Timeout: 10 * time.Second},
-		token:  cfg.Token,
+func NewSender(cfg config.TelegramSettings, registry *templates.Registry) (ports.Notifier, error) {
+	funcMap := template.FuncMap{
+		"escape": escapeMarkdown,
 	}
+
+	allTemplates, err := registry.LoadAll(funcMap)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load templates for telegram sender: %w", err)
+	}
+
+	return &Sender{
+		client:    &http.Client{Timeout: 10 * time.Second},
+		token:     cfg.Token,
+		templates: allTemplates,
+	}, nil
 }
 
 func (s *Sender) Send(ctx context.Context, chatID string, notification domain.Notification) error {
-	escapedText := escapeMarkdownV2Selective(notification.Body)
+	var textToSend string
+	var parseMode = ""
 
-	err := s.trySend(ctx, chatID, escapedText, "MarkdownV2")
-	if err == nil {
-		return nil
+	if notification.TemplateName != "" && notification.TemplateData != nil {
+		var buf bytes.Buffer
+		err := s.templates.ExecuteTemplate(&buf, notification.TemplateName, notification.TemplateData)
+		if err != nil {
+			return fmt.Errorf("failed to execute telegram template '%s': %w", notification.TemplateName, err)
+		}
+		textToSend = buf.String()
+		parseMode = "MarkdownV2"
+	} else {
+		textToSend = notification.Body
 	}
 
-	if strings.Contains(err.Error(), "can't parse entities") {
-		log.FromContext(ctx).Warn().Msg("MarkdownV2 parsing failed, falling back to plain text.")
-		return s.trySend(ctx, chatID, notification.Body, "")
+	err := s.trySend(ctx, chatID, textToSend, parseMode)
+	if err != nil && strings.Contains(err.Error(), "can't parse entities") {
+		log.FromContext(ctx).Warn().Str("template", notification.TemplateName).Msg("MarkdownV2 parsing failed, falling back to plain text.")
+		return s.trySend(ctx, chatID, textToSend, "") // Повторная отправка без форматирования
 	}
 
 	return err
@@ -82,15 +104,23 @@ func (s *Sender) trySend(ctx context.Context, chatID, text, parseMode string) er
 	return nil
 }
 
-// escapeMarkdownV2Selective selectively escapes characters for Telegram's MarkdownV2 parser.
-// It preserves common formatting characters like *, _, `, [ and ] to allow for intentional formatting.
-func escapeMarkdownV2Selective(text string) string {
-	// Characters that Telegram requires to be escaped in MarkdownV2 mode.
-	// We are intentionally NOT escaping *, _, `, [ and ] because we assume they are used for formatting.
-	// The parentheses ( and ) are also not escaped here to allow for [link](url) syntax.
-	// If you have literal parentheses to send, they must be escaped.
+func escapeMarkdown(text interface{}) string {
+	if text == nil {
+		return ""
+	}
+
+	s := fmt.Sprint(text)
+
 	replacer := strings.NewReplacer(
+		"\\", "\\\\",
+		"_", "\\_",
+		"*", "\\*",
+		"[", "\\[",
+		"]", "\\]",
+		"(", "\\(",
+		")", "\\)",
 		"~", "\\~",
+		"`", "\\`",
 		">", "\\>",
 		"#", "\\#",
 		"+", "\\+",
@@ -102,5 +132,5 @@ func escapeMarkdownV2Selective(text string) string {
 		".", "\\.",
 		"!", "\\!",
 	)
-	return replacer.Replace(text)
+	return replacer.Replace(s)
 }

@@ -14,18 +14,21 @@ import (
 	"github.com/shanth1/hookrelay/internal/config"
 	"github.com/shanth1/hookrelay/internal/core/ports"
 	"github.com/shanth1/hookrelay/internal/service"
+	"github.com/shanth1/hookrelay/internal/templates"
 	httptransport "github.com/shanth1/hookrelay/internal/transport/http"
 )
 
 func Run(ctx, shutdownCtx context.Context, cfg *config.Config) {
 	logger := log.FromContext(ctx)
 
-	handlers, err := initInboundHandlers(cfg, logger)
+	templateRegistry := templates.NewRegistry()
+
+	handlers, err := initInboundHandlers(cfg, logger, templateRegistry)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("failed to initialize inbound processors")
 	}
 
-	notifiers, err := initOutboundAdapters(cfg, logger)
+	notifiers, err := initOutboundAdapters(cfg, logger, templateRegistry)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("failed to initialize outbound adapters")
 	}
@@ -36,19 +39,19 @@ func Run(ctx, shutdownCtx context.Context, cfg *config.Config) {
 	logger.Info().Msg("application shutdown complete")
 }
 
-func initInboundHandlers(cfg *config.Config, logger log.Logger) (map[config.WebhookName]ports.WebhookHandler, error) {
+func initInboundHandlers(cfg *config.Config, logger log.Logger, registry *templates.Registry) (map[config.WebhookName]ports.WebhookHandler, error) {
 	handlers := make(map[config.WebhookName]ports.WebhookHandler)
 	for _, webhookCfg := range cfg.Webhooks {
 		var handler ports.WebhookHandler
 		var err error
 		switch webhookCfg.Type {
 		case config.WebhookTypeGitHub:
-			handler, err = github.NewHandler(webhookCfg.Secret, cfg.DisableUnknownTemplates)
+			handler, err = github.NewHandler(webhookCfg.Secret, cfg.DisableUnknownTemplates, registry)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create github processor: %w", err)
 			}
 		case config.WebhookTypeKanboard:
-			handler, err = kanboard.NewHandler(webhookCfg.Secret, webhookCfg.BaseURL, cfg.DisableUnknownTemplates)
+			handler, err = kanboard.NewHandler(webhookCfg.Secret, webhookCfg.BaseURL, cfg.DisableUnknownTemplates, registry)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create kanboard processor: %w", err)
 			}
@@ -65,7 +68,7 @@ func initInboundHandlers(cfg *config.Config, logger log.Logger) (map[config.Webh
 
 }
 
-func initOutboundAdapters(cfg *config.Config, logger log.Logger) (map[config.NotifierName]ports.Notifier, error) {
+func initOutboundAdapters(cfg *config.Config, logger log.Logger, registry *templates.Registry) (map[config.NotifierName]ports.Notifier, error) {
 	notifiers := make(map[config.NotifierName]ports.Notifier)
 	for _, notifierCfg := range cfg.Notifiers {
 		var notifier ports.Notifier
@@ -76,7 +79,10 @@ func initOutboundAdapters(cfg *config.Config, logger log.Logger) (map[config.Not
 			if err = notifierCfg.DecodeSettings(&settings); err != nil {
 				return nil, fmt.Errorf("failed to decode telegram settings for '%s': %w", notifierCfg.Name, err)
 			}
-			notifier = telegram.NewSender(settings)
+			notifier, err = telegram.NewSender(settings, registry)
+			if err != nil {
+				return nil, err
+			}
 		case config.NotifierTypeEmail:
 			var settings config.EmailSettings
 			if err = notifierCfg.DecodeSettings(&settings); err != nil {

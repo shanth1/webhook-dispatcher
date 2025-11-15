@@ -1,15 +1,15 @@
 package kanboard
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"text/template"
+	"io/fs"
 
 	"github.com/shanth1/hookrelay/internal/common"
 	"github.com/shanth1/hookrelay/internal/core/domain"
 	"github.com/shanth1/hookrelay/internal/core/ports"
+	"github.com/shanth1/hookrelay/internal/templates"
 )
 
 type KanboardPayload struct {
@@ -21,13 +21,13 @@ type KanboardPayload struct {
 type Handler struct {
 	secret                  string
 	baseURL                 string
-	templates               *template.Template
+	templateFS              fs.FS
 	disableUnknownTemplates bool
 }
 
 var _ ports.WebhookHandler = (*Handler)(nil)
 
-func NewHandler(secret, baseURL string, disableUnknownTemplates bool) (ports.WebhookHandler, error) {
+func NewHandler(secret, baseURL string, disableUnknownTemplates bool, registry *templates.Registry) (ports.WebhookHandler, error) {
 	if secret == "" {
 		return nil, fmt.Errorf("empty 'secret' value")
 	}
@@ -37,14 +37,18 @@ func NewHandler(secret, baseURL string, disableUnknownTemplates bool) (ports.Web
 		return nil, fmt.Errorf("empty 'base_url' value")
 	}
 
-	tmpls, err := parseTemplates()
+	err := registry.RegisterSource("kanboard", templates.Source{
+		FS:       templateFiles,
+		Patterns: []string{"templates/*.tmpl"},
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse kanboard templates: %w", err)
+		return nil, fmt.Errorf("failed to register kanboard template source: %w", err)
 	}
+
 	return &Handler{
 		secret:                  secret,
 		baseURL:                 baseURL,
-		templates:               tmpls,
+		templateFS:              templateFiles,
 		disableUnknownTemplates: disableUnknownTemplates,
 	}, nil
 }
@@ -84,20 +88,15 @@ func (h *Handler) Handle(ctx context.Context, req ports.WebhookRequest) (*domain
 	}
 
 	templateName := common.GetTemplatePath(payload.EventName)
-	if h.templates.Lookup(templateName) == nil {
-		templateExists := h.templates.Lookup(templateName) != nil
-		if !templateExists {
-			if h.disableUnknownTemplates {
-				return nil, nil
-			}
-			templateName = common.GetTemplatePath("default")
+	if _, err := fs.Stat(h.templateFS, "templates/"+templateName); err != nil {
+		if h.disableUnknownTemplates {
+			return nil, nil
 		}
+		templateName = common.GetTemplatePath("default")
 	}
 
-	var message bytes.Buffer
-	if err := h.templates.ExecuteTemplate(&message, templateName, payload); err != nil {
-		return nil, fmt.Errorf("error executing kanboard template '%s': %w", templateName, err)
-	}
-
-	return &domain.Notification{Body: message.String()}, nil
+	return &domain.Notification{
+		TemplateName: "kanboard/" + templateName,
+		TemplateData: payload,
+	}, nil
 }
