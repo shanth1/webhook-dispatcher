@@ -2,7 +2,7 @@ package github
 
 import (
 	"embed"
-	"html/template"
+	"text/template"
 )
 
 //go:embed templates/*.tmpl

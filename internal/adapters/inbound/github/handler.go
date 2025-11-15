@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"html/template"
+	"text/template"
 
 	"github.com/shanth1/hookrelay/internal/common"
 	"github.com/shanth1/hookrelay/internal/core/domain"
