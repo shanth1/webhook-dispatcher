@@ -1,9 +1,0 @@
-📦 {{ len .commits }} new commit(s) pushed to [{{ .repository.name }}]({{ .repository.html_url }})
-
-Branch: `{{ .ref }}` by [{{ .sender.login }}]({{ .sender.html_url }})
-Commits:
-{{- range .commits }}
-- `{{ .id  }}`: {{ .message }} (by {{ .author.name }}) [View]({{ .url }})
-{{- end }}
-
-Compare changes: [{{ .compare }}]({{ .compare }})

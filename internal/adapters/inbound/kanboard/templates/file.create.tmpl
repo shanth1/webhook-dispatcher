@@ -1,0 +1,8 @@
+📎 *A file is attached to the task*
+
+Project: `{{ .EventData.task.project_name }}`
+Task: [{{ .EventData.task.title }}]({{ .EventData.task.url }})
+
+File name: `{{ .EventData.file.name }}`
+Size: `{{ .EventData.file.size }} байт`
+Author: `{{ .EventData.file.user_name }}`

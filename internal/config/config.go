@@ -2,14 +2,16 @@ package config
 
 import "github.com/mitchellh/mapstructure"
 
-type SenderType string
+type NotifierType string
+type WebhookType string
+
+type NotifierName string
+type WebhookName string
 
 const (
-	SenderTypeTelegram SenderType = "telegram"
-	SenderTypeEmail    SenderType = "email"
+	NotifierTypeTelegram NotifierType = "telegram"
+	NotifierTypeEmail    NotifierType = "email"
 )
-
-type WebhookType string
 
 const (
 	WebhookTypeGitHub   WebhookType = "github"
@@ -17,24 +19,46 @@ const (
 	WebhookTypeCustom   WebhookType = "custom"
 )
 
-type Recipient struct {
-	Name   string `mapstructure:"name"`
-	Sender string `mapstructure:"sender"`
-	Target string `mapstructure:"target"`
+type Config struct {
+	Env                     string           `mapstructure:"env"`
+	Addr                    string           `mapstructure:"addr"`
+	Webhooks                []WebhookConfig  `mapstructure:"webhooks"`
+	Notifiers               []NotifierConfig `mapstructure:"notifiers"`
+	Recipients              []Recipient      `mapstructure:"recipients"`
+	Logger                  Logger           `mapstructure:"logger"`
+	DisableUnknownTemplates bool             `mapstructure:"disable_unknown_templates"` // TODO: moved to webhookConfig
 }
 
-type SenderConfig struct {
-	Name     string                 `mapstructure:"name"`
-	Type     SenderType             `mapstructure:"type"`
+type Logger struct {
+	App        string `mapstructure:"app"`
+	Level      string `mapstructure:"level"`
+	Service    string `mapstructure:"service"`
+	UDPAddress string `mapstructure:"udp_address"`
+}
+
+type NotifierConfig struct {
+	Name     NotifierName           `mapstructure:"name"`
+	Type     NotifierType           `mapstructure:"type"`
 	Settings map[string]interface{} `mapstructure:"settings"`
 }
 
+func (sc *NotifierConfig) DecodeSettings(v interface{}) error {
+	return mapstructure.Decode(sc.Settings, v)
+}
+
 type WebhookConfig struct {
-	Name       string      `mapstructure:"name"`
+	Name       WebhookName `mapstructure:"name"`
 	Path       string      `mapstructure:"path"`
 	Type       WebhookType `mapstructure:"type"`
 	Secret     string      `mapstructure:"secret"`
+	BaseURL    string      `mapstructure:"base_url"`
 	Recipients []string    `mapstructure:"recipients"`
+}
+
+type Recipient struct {
+	Name     string       `mapstructure:"name"`
+	Target   string       `mapstructure:"target"`
+	Notifier NotifierName `mapstructure:"notifier"`
 }
 
 type TelegramSettings struct {
@@ -47,24 +71,4 @@ type EmailSettings struct {
 	Username string `mapstructure:"username"`
 	Password string `mapstructure:"password"`
 	From     string `mapstructure:"from"`
-}
-
-type Logger struct {
-	App       string `mapstructure:"app"`
-	Level     string `mapstructure:"level"`
-	Service   string `mapstructure:"service"`
-	UDPAddres string `mapstructure:"udp_address"`
-}
-
-type Config struct {
-	Env        string          `mapstructure:"env"`
-	Addr       string          `mapstructure:"addr"`
-	Webhooks   []WebhookConfig `mapstructure:"webhooks"`
-	Senders    []SenderConfig  `mapstructure:"senders"`
-	Recipients []Recipient     `mapstructure:"recipients"`
-	Logger     Logger          `mapstructure:"logger"`
-}
-
-func (sc *SenderConfig) DecodeSenderSettings(v interface{}) error {
-	return mapstructure.Decode(sc.Settings, v)
 }
